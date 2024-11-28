@@ -1,79 +1,15 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
-
-  <Import Project="custom\PreviewBuild.targets" />
-  
+<Project Sdk="Dalamud.NET.Sdk/11.0.0">
   <PropertyGroup>
-    <Authors>yomishino</Authors>
-    <Version>1.6.4.0</Version>
+    <Authors>Cytraen, yomishino</Authors>
+    <Version>1.6.5.0</Version>
     <Description>An FFXIV Dalamud plugin providing a set of compasses that detect and mark certain nearby objects/NPCs.</Description>
-    <PackageProjectUrl></PackageProjectUrl>
-    <RepositoryUrl>https://github.com/yomishino/FFXIVAetherCompass</RepositoryUrl>
-    <Configurations>Debug;Release;PreRelease;PreTest</Configurations>
-  </PropertyGroup>
-
-  <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
-    <Platforms>x64</Platforms>
-    <Nullable>enable</Nullable>
-    <LangVersion>latest</LangVersion>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <ProduceReferenceAssembly>false</ProduceReferenceAssembly>
-    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
-    <OutputPath></OutputPath>
-    <NoWarn>CA1416</NoWarn>
-    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
-  </PropertyGroup>
-
-  <PropertyGroup>
-    <DalamudLibPath>$(AppData)\XIVLauncher\addon\Hooks\dev</DalamudLibPath>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='PreTest|x64'">
-    <DefineConstants>TRACE;TEST;PRE</DefineConstants>
-    <Optimize>true</Optimize>
-    <PlatformTarget>x64</PlatformTarget>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='PreRelease|x64'">
-    <DefineConstants>PRE</DefineConstants>
-    <Optimize>True</Optimize>
-    <PlatformTarget>x64</PlatformTarget>
+    <RepositoryUrl>https://github.com/Cytraen/AetherCompass</RepositoryUrl>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="DalamudPackager" Version="11.0.0" />
-    <Reference Include="Dalamud">
-      <HintPath Condition="Exists('$(DalamudLibPath)')">$(DalamudLibPath)\Dalamud.dll</HintPath>
-      <Private>false</Private>
-    </Reference>
-    <Reference Include="ImGui.NET">
-      <HintPath Condition="Exists('$(DalamudLibPath)')">$(DalamudLibPath)\ImGui.NET.dll</HintPath>
-      <Private>false</Private>
-    </Reference>
-    <Reference Include="ImGuiScene">
-      <HintPath Condition="Exists('$(DalamudLibPath)')">$(DalamudLibPath)\ImGuiScene.dll</HintPath>
-      <Private>false</Private>
-    </Reference>
-    <Reference Include="Lumina">
-      <HintPath Condition="Exists('$(DalamudLibPath)')">$(DalamudLibPath)\Lumina.dll</HintPath>
-      <Private>false</Private>
-    </Reference>
-    <Reference Include="Lumina.Excel">
-      <HintPath Condition="Exists('$(DalamudLibPath)')">$(DalamudLibPath)\Lumina.Excel.dll</HintPath>
-      <Private>false</Private>
-    </Reference>
-    <Reference Include="FFXIVClientStructs">
-      <HintPath Condition="Exists('$(DalamudLibPath)')">$(DalamudLibPath)\FFXIVClientStructs.dll</HintPath>
-      <Private>false</Private>
-    </Reference>
-    <Reference Include="Newtonsoft.Json">
-      <HintPath Condition="Exists('$(DalamudLibPath)')">$(DalamudLibPath)\Newtonsoft.Json.dll</HintPath>
-      <Private>false</Private>
-    </Reference>
     <Reference Include="Reloaded.Hooks.Definitions">
       <HintPath Condition="Exists('$(DalamudLibPath)')">$(DalamudLibPath)\SharpDX.Mathematics.dll</HintPath>
       <Private>false</Private>
     </Reference>
   </ItemGroup>
-
 </Project>
