@@ -156,7 +156,7 @@ namespace AetherCompass.Compasses
             if (map != null)
             {
                 var fixedMapLink = FixedMapLinkPayload.FromMapCoord(terrId, ZoneWatcher.CurrentMapId,
-                    mapFlagCoord.X, mapFlagCoord.Y, map.SizeFactor, map.OffsetX, map.OffsetY);
+                    mapFlagCoord.X, mapFlagCoord.Y, map.Value.SizeFactor, map.Value.OffsetX, map.Value.OffsetY);
 #if DEBUG
                 LogDebug($"Create MapLinkPayload from {mapFlagCoord}: {fixedMapLink}");
 #endif

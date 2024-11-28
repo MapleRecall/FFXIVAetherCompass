@@ -23,7 +23,7 @@ namespace AetherCompass.Compasses
 
         
         public override bool IsEnabledInCurrentTerritory()
-            => ZoneWatcher.CurrentTerritoryType?.TerritoryIntendedUse == 1; // mostly normal wild field
+            => ZoneWatcher.CurrentTerritoryType?.TerritoryIntendedUse.ValueNullable?.RowId == 1; // mostly normal wild field
 
 
         private protected override unsafe string GetClosestObjectiveDescription(CachedCompassObjective _)

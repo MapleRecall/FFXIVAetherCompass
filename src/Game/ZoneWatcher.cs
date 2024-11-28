@@ -1,5 +1,5 @@
 ﻿using AetherCompass.Game.SeFunctions;
-using Excel = Lumina.Excel.GeneratedSheets;
+using Excel = Lumina.Excel.Sheets;
 
 namespace AetherCompass.Game
 {
@@ -18,7 +18,7 @@ namespace AetherCompass.Game
             {
                 var altMapId = ZoneMap.GetCurrentAltMapId();
                 if (altMapId > 0) return altMapId;
-                return CurrentTerritoryType?.Map.Row ?? 0;
+                return CurrentTerritoryType?.Map.ValueNullable?.RowId ?? 0;
             }
         }
         private static Excel.Map? cachedMap;
@@ -26,7 +26,7 @@ namespace AetherCompass.Game
         {
             get
             {
-                if (cachedMap == null || CurrentMapId != cachedMap.RowId) cachedMap = GetMap();
+                if (cachedMap == null || CurrentMapId != cachedMap.Value.RowId) cachedMap = GetMap();
                 return cachedMap;
             }
         }
@@ -56,9 +56,9 @@ namespace AetherCompass.Game
         private static void CheckCompassWorkZone()
         {
             IsInCompassWorkZone = CurrentTerritoryType != null
-                && !CurrentTerritoryType.IsPvpZone
-                && CurrentTerritoryType.BattalionMode <= 1   // > 1 are pvp contents or LoVM
-                && CurrentTerritoryType.TerritoryIntendedUse != 20  // chocobo race terr?
+                && !CurrentTerritoryType.Value.IsPvpZone
+                && CurrentTerritoryType.Value.BattalionMode <= 1   // > 1 are pvp contents or LoVM
+                && CurrentTerritoryType.Value.TerritoryIntendedUse.ValueNullable?.RowId != 20  // chocobo race terr?
                 ;
         }
 
@@ -66,7 +66,7 @@ namespace AetherCompass.Game
         {
             // Exclusive type: 0 not instanced, 1 is solo instance, 2 is nonsolo instance.
             // Not sure about 3, seems quite mixed up with solo battles, diadem and misc stuff like LoVM
-            IsInDetailWindowHideZone = CurrentTerritoryType == null || CurrentTerritoryType.ExclusiveType > 0;
+            IsInDetailWindowHideZone = CurrentTerritoryType == null || CurrentTerritoryType.Value.ExclusiveType > 0;
         }
 
     }

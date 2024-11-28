@@ -1,7 +1,7 @@
 ﻿global using System;
 global using System.Collections.Generic;
 global using static AetherCompass.PluginUtil;
-global using Sheets = Lumina.Excel.GeneratedSheets;
+global using Sheets = Lumina.Excel.Sheets;
 using AetherCompass.Compasses;
 using AetherCompass.Game;
 using AetherCompass.UI;

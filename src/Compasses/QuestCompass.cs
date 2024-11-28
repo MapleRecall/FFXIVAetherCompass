@@ -90,8 +90,8 @@ namespace AetherCompass.Compasses
                 if (qItem != null)
                 {
                     ImGui.BulletText(
-                        $"JournalGenre: {qItem.JournalGenre.Value?.Name ?? string.Empty} #{qItem.JournalGenre.Row}, " +
-                        $"Type: {qItem.Type}");
+                        $"JournalGenre: {qItem.Value.JournalGenre.ValueNullable?.Name ?? string.Empty} #{qItem.Value.JournalGenre.ValueNullable?.RowId}, " +
+                        $"Type: {qItem.Value.Type}");
                 }
 #endif
                 ImGui.BulletText($"{CompassUtil.MapCoordToFormattedString(objective.CurrentMapCoord)} (approx.)");
@@ -108,10 +108,10 @@ namespace AetherCompass.Compasses
             if (objective.IsEmpty()) return null;
             if (!objQuestMap.TryGetValue(objective.DataId, out var mappedInfo)) return null;
             var qRow = GetQuestRow(mappedInfo.RelatedQuest.QuestID);
-            var iconId = qRow == null || qRow.EventIconType.Value == null
+            var iconId = qRow == null || qRow.Value.EventIconType.ValueNullable == null
                 ? defaultQuestMarkerIconId
-                : GetQuestMarkerIconId(qRow.EventIconType.Value.NpcIconAvailable,
-                    qRow.EventIconType.Value.IconRange,
+                : GetQuestMarkerIconId(qRow.Value.EventIconType.Value.NpcIconAvailable,
+                    qRow.Value.EventIconType.Value.IconRange,
                     mappedInfo.RelatedQuest.QuestSeq == questFinalSeqIdx);
             var descr = (mappedInfo.TodoRevealed ? "★ " : "") + $"{objective.Name}";
             if (QuestConfig.ShowQuestName)
@@ -200,7 +200,7 @@ namespace AetherCompass.Compasses
         private static Sheets.Quest? GetQuestRow(ushort questId)
             => QuestSheet?.GetRow(QuestIdToQuestRowId(questId));
         private static string GetQuestName(ushort questId)
-            => GetQuestRow(questId)?.Name?.RawString ?? string.Empty;
+            => GetQuestRow(questId)?.Name.ExtractText() ?? string.Empty;
 
 
         // ActorSpawn, ActorDespawn, Listener, etc.
@@ -219,9 +219,10 @@ namespace AetherCompass.Compasses
             }
 
             static bool ShouldExitActorArrayLoop(Sheets.Quest q, int idx)
-                => (idx >= 0 && idx < questSheetActorArrayLength / 2 && q.QuestUInt8A[idx] == 0)
-                || (idx >= questSheetActorArrayLength / 2 && idx < questSheetActorArrayLength
-                    && q.QuestUInt8B[idx - questSheetActorArrayLength / 2] == 0);
+                => (idx >= 0 && idx < questSheetActorArrayLength / 2 && q.QuestListenerParams[idx].QuestUInt8A == 0);
+                // TODO complete API11/7.1 update
+                //|| (idx >= questSheetActorArrayLength / 2 && idx < questSheetActorArrayLength
+                //    && q.QuestListenerParams[idx - questSheetActorArrayLength / 2].QuestUInt8B == 0);
 
             for (int i = 0; i < Quests.QuestListArrayLength; i++)
             {
@@ -237,7 +238,7 @@ namespace AetherCompass.Compasses
                 {
                     // NOTE: ignore Level location for now,
                     // because we cant tell if the ToDos are completed or not when there are multiple Todos
-                    if (questRow.ToDoCompleteSeq[j] == quest.QuestSeq)
+                    if (questRow.Value.TodoParams[j].ToDoCompleteSeq == quest.QuestSeq)
                     {
                         //var mainLoc = questRow.ToDoMainLocation[j].Value;
                         //if (mainLoc != null && mainLoc.Object != 0)
@@ -260,32 +261,32 @@ namespace AetherCompass.Compasses
                             if (todoLocRowId > 0)
                             {
                                 var todoLoc = LevelSheet?.GetRow(todoLocRowId);
-                                if (todoLoc != null && todoLoc.Object != 0)
-                                    todoRevealedObjs.Add(todoLoc.Object);
+                                if (todoLoc != null && todoLoc.Value.Object.RowId != 0)
+                                    todoRevealedObjs.Add(todoLoc.Value.Object.RowId);
                             }
                         }
                     }
-                    if (questRow.ToDoCompleteSeq[j] == questFinalSeqIdx) break;
+                    if (questRow.Value.TodoParams[j].ToDoCompleteSeq == questFinalSeqIdx) break;
                 }
 
                 // Actor related arrays: find out related gameobjs
                 List<uint> objsThisSeq = new(); // objectives (usually listeners) that will be deactivated when this Seq completes
                 for (int j = 0; j < questSheetActorArrayLength; j++)
                 {
-                    if (ShouldExitActorArrayLoop(questRow, j)) break;
-                    var listener = questRow.Listener[j];
+                    if (ShouldExitActorArrayLoop(questRow.Value, j)) break;
+                    var listener = questRow.Value.QuestListenerParams[j].Listener;
                     // Track ConditionValue if ConditionType non-zero instead of listener itself;
                     // this usually happens with BNpc etc. which we don't consider yet, but anyway
-                    var objToTrack = questRow.ConditionType[j] > 0 ? questRow.ConditionValue[j] : listener;
+                    var objToTrack = questRow.Value.QuestListenerParams[j].ConditionType > 0 ? questRow.Value.QuestListenerParams[j].ConditionValue : listener;
                     bool todoRevealed = todoRevealedObjs.Contains(objToTrack);
                     // Skip those not revealed by ToDos if option not enabled
                     if (!QuestConfig.ShowAllRelated && !todoRevealed) continue;
-                    if (questRow.ActorSpawnSeq[j] == 0) continue; // Invalid? usually won't have this
-                    if (questRow.ActorSpawnSeq[j] > quest.QuestSeq) continue; // Not spawn/active yet
-                    if (questRow.ActorDespawnSeq[j] < questSheetToDoArrayLength)
+                    if (questRow.Value.QuestListenerParams[j].ActorSpawnSeq == 0) continue; // Invalid? usually won't have this
+                    if (questRow.Value.QuestListenerParams[j].ActorSpawnSeq > quest.QuestSeq) continue; // Not spawn/active yet
+                    if (questRow.Value.QuestListenerParams[j].ActorDespawnSeq < questSheetToDoArrayLength)
                     {
                         // I think ActorDespawnSeq corresponds to ToDo idx, not Seq
-                        var despawnSeq = questRow.ToDoCompleteSeq[questRow.ActorDespawnSeq[j]];
+                        var despawnSeq = questRow.Value.TodoParams[questRow.Value.QuestListenerParams[j].ActorDespawnSeq].ToDoCompleteSeq;
                         if (despawnSeq < quest.QuestSeq)
                             continue; // Despawned/deactivated when previous Seq ends
                         // TODO: should we also check if it's spawned at start of this Seq?

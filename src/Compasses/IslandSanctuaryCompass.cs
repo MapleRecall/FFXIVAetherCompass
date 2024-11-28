@@ -43,7 +43,7 @@ namespace AetherCompass.Compasses
 
         // TerritoryType RowId = 1055; TerritoryIntendedUse = 49
         public override bool IsEnabledInCurrentTerritory()
-            => ZoneWatcher.CurrentTerritoryType?.TerritoryIntendedUse == 49;
+            => ZoneWatcher.CurrentTerritoryType?.TerritoryIntendedUse.ValueNullable?.RowId == 49;
 
         public override unsafe bool IsObjective(GameObject* o)
         {
@@ -256,11 +256,12 @@ namespace AetherCompass.Compasses
             }
             foreach (var row in gatheringSheet)
             {
+                if (row.Name.ValueNullable == null) continue;
                 var name = Language.SanitizeText(
-                    eObjNameSheet?.GetRow(row.Name.Row)?.Singular.RawString ?? string.Empty);
+                    eObjNameSheet?.GetRow(row.Name.Value.RowId).Singular.ExtractText() ?? string.Empty);
                 var data = new IslandGatheringObjectData(
-                        row.RowId, row.Name.Row, row.MapIcon, name);
-                islandGatherDict.Add(row.Name.Row, data);
+                        row.RowId, row.Name.RowId, row.MapIcon, name);
+                islandGatherDict.Add(row.Name.RowId, data);
                 islandGatherList.Add(data);
             }
         }
@@ -284,10 +285,10 @@ namespace AetherCompass.Compasses
             }
             foreach (var row in animalSheet)
             {
-                var dataId = row.BNpcBase.Row;
+                var dataId = row.BNpcBase.RowId;
                 var data = new IslandAnimalData(
                     row.RowId, dataId, (uint)row.Icon);
-                islandAnimalDict.Add(row.BNpcBase.Row, data);
+                islandAnimalDict.Add(row.BNpcBase.RowId, data);
                 islandAnimalList.Add(data);
             }
         }

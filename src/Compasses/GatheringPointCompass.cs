@@ -27,8 +27,8 @@ namespace AetherCompass.Compasses
 
 
         public override bool IsEnabledInCurrentTerritory()
-            => ZoneWatcher.CurrentTerritoryType?.TerritoryIntendedUse == 1
-            || ZoneWatcher.CurrentTerritoryType?.TerritoryIntendedUse == 47   // diadem
+            => ZoneWatcher.CurrentTerritoryType?.TerritoryIntendedUse.ValueNullable?.RowId == 1
+            || ZoneWatcher.CurrentTerritoryType?.TerritoryIntendedUse.ValueNullable?.RowId == 47   // diadem
             ;
 
         public override unsafe bool IsObjective(GameObject* o)
@@ -86,7 +86,7 @@ namespace AetherCompass.Compasses
         {
             var gatherPointData = GatheringPointSheet?.GetRow(dataId);
             if (gatherPointData == null) return false;
-            return IsSpecialGatheringPointType(gatherPointData.Type);
+            return IsSpecialGatheringPointType(gatherPointData.Value.Type);
         }
 
 
@@ -96,22 +96,21 @@ namespace AetherCompass.Compasses
             var typeRow = GatheringTypeSheet?.GetRow(gatheringType);
             if (typeRow == null) return 0;
             return (uint)(IsSpecialGatheringPointType(gatheringPointType) 
-                ? typeRow.IconOff : typeRow.IconMain);
+                ? typeRow.Value.IconOff : typeRow.Value.IconMain);
         }
 
         private static uint GetGatheringPointIconId(uint dataId)
         {
-            var gatherType = GatheringPointSheet?.GetRow(dataId)?
-                .GatheringPointBase.Value?.GatheringType.Value;
+            var gatherType = GatheringPointSheet?.GetRow(dataId).GatheringPointBase.ValueNullable?.GatheringType.Value;
             if (gatherType == null) return 0;
             return (uint)(IsSpecialGatheringPoint(dataId) 
-                ? gatherType.IconOff : gatherType.IconMain);
+                ? gatherType.Value.IconOff : gatherType.Value.IconMain);
         }
 
         private static byte GetGatheringLevel(uint dataId)
         {
-            var gatherPointBase = GatheringPointSheet?.GetRow(dataId)?.GatheringPointBase.Value;
-            return gatherPointBase == null ? byte.MinValue : gatherPointBase.GatheringLevel;
+            var gatherPointBase = GatheringPointSheet?.GetRow(dataId).GatheringPointBase.ValueNullable;
+            return gatherPointBase == null ? byte.MinValue : gatherPointBase.Value.GatheringLevel;
         }
 
         private static string GetGatheringLevelDescription(uint dataId)

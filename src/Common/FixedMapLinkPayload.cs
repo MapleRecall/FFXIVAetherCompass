@@ -23,9 +23,9 @@ namespace AetherCompass.Common
 
         public static FixedMapLinkPayload FromMapCoord(uint terrId, uint mapId, float xCoord, float yCoord)
         {
-            var map = Plugin.DataManager.GetExcelSheet<Lumina.Excel.GeneratedSheets.Map>()?.GetRow(mapId);
+            var map = Plugin.DataManager.GetExcelSheet<Sheets.Map>()?.GetRow(mapId);
             if (map == null) return new(terrId, mapId, 0, 0, 0, 0);
-            return FromMapCoord(terrId, mapId, xCoord, yCoord, map.SizeFactor, map.OffsetX, map.OffsetY);
+            return FromMapCoord(terrId, mapId, xCoord, yCoord, map.Value.SizeFactor, map.Value.OffsetX, map.Value.OffsetY);
         }
 
         public static FixedMapLinkPayload FromMapCoord(uint terrId, uint mapId, float xCoord, float yCoord, ushort scale, short offsetX, short offsetY)

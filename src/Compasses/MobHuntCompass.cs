@@ -30,7 +30,7 @@ namespace AetherCompass.Compasses
 
 
         public override bool IsEnabledInCurrentTerritory()
-            => ZoneWatcher.CurrentTerritoryType?.TerritoryIntendedUse == 1;
+            => ZoneWatcher.CurrentTerritoryType?.TerritoryIntendedUse.ValueNullable?.RowId == 1;
 
         public override unsafe bool IsObjective(GameObject* o)
             => o != null && nmDataMap.TryGetValue(o->BaseId, out var data) && data.IsValid
@@ -113,8 +113,8 @@ namespace AetherCompass.Compasses
             }
             foreach (var row in NMSheet)
             {
-                if (row.BNpcBase.Row != 0)
-                    nmDataMap.TryAdd(row.BNpcBase.Row, new(row.RowId));
+                if (row.BNpcBase.RowId != 0)
+                    nmDataMap.TryAdd(row.BNpcBase.RowId, new(row.RowId));
             }
         }
 
@@ -137,8 +137,9 @@ namespace AetherCompass.Compasses
                 NMSheetRowId = nmSheetRowId;
                 if (NMSheet == null) return;
                 var row = NMSheet.GetRow(nmSheetRowId);
-                if (row == null) return;
-                BNpcDataId = row.BNpcBase.Row;
+                // TODO complete API11/7.1 update
+                // if (row == null) return;
+                BNpcDataId = row.BNpcBase.RowId;
                 Rank = (NMRank)row.Rank;
                 IsValid = true;
             }

@@ -24,7 +24,7 @@ namespace AetherCompass.Compasses
             elementalMarkerIconSize = new(25, 25);
 
         public override bool IsEnabledInCurrentTerritory()
-            => ZoneWatcher.CurrentTerritoryType?.TerritoryIntendedUse == 41;
+            => ZoneWatcher.CurrentTerritoryType?.TerritoryIntendedUse.ValueNullable?.RowId == 41;
 
 
         private protected override unsafe string GetClosestObjectiveDescription(

@@ -39,9 +39,9 @@ namespace AetherCompass.UI.GUI
 
             if (ImGui.Begin("AetherCompass: Detected Objects' Details"))
             {
-                var regionName = CompassUtil.GetPlaceNameToString(map.PlaceNameRegion.Row);
-                var placeName = CompassUtil.GetPlaceNameToString(map.PlaceName.Row);
-                var subName = CompassUtil.GetPlaceNameToString(map.PlaceNameSub.Row);
+                var regionName = CompassUtil.GetPlaceNameToString(map.Value.PlaceNameRegion.RowId);
+                var placeName = CompassUtil.GetPlaceNameToString(map.Value.PlaceName.RowId);
+                var subName = CompassUtil.GetPlaceNameToString(map.Value.PlaceNameSub.RowId);
                 var mapName = regionName;
                 if (!string.IsNullOrEmpty(mapName) && !string.IsNullOrEmpty(placeName))
                     mapName += " > " + placeName;
@@ -67,8 +67,8 @@ namespace AetherCompass.UI.GUI
 
 #if DEBUG
                 ImGui.BulletText($"TerritoryType={ZoneWatcher.CurrentTerritoryType?.RowId ?? 0}");
-                ImGui.BulletText($"Map data: RowId={map.RowId}, SizeFactor={map.SizeFactor}, " +
-                    $"OffsetX={map.OffsetX}, OffsetY={map.OffsetY}, OffsetZ={CompassUtil.GetCurrentTerritoryZOffset()}");
+                ImGui.BulletText($"Map data: RowId={map.Value.RowId}, SizeFactor={map.Value.SizeFactor}, " +
+                    $"OffsetX={map.Value.OffsetX}, OffsetY={map.Value.OffsetY}, OffsetZ={CompassUtil.GetCurrentTerritoryZOffset()}");
                 ImGui.BulletText($"Main Viewport: pos={Dalamud.Interface.Utility.ImGuiHelpers.MainViewport.Pos}, " +
                     $"size={Dalamud.Interface.Utility.ImGuiHelpers.MainViewport.Size}, dpi={Dalamud.Interface.Utility.ImGuiHelpers.MainViewport.DpiScale}");
 #endif

@@ -113,7 +113,7 @@ namespace AetherCompass.Common
 
         public static string GetPlaceNameToString(uint placeNameRowId, string emptyPlaceName = "")
         {
-            var name = ZoneWatcher.PlaceName?.GetRow(placeNameRowId)?.Name.ToString();
+            var name = ZoneWatcher.PlaceName?.GetRow(placeNameRowId).Name.ToString();
             if (string.IsNullOrEmpty(name)) return emptyPlaceName;
             return name;
         }
@@ -146,7 +146,7 @@ namespace AetherCompass.Common
         {
             var map = ZoneWatcher.CurrentMap;
             if (map == null) return new Vector3(float.NaN, float.NaN, float.NaN);
-            return GetMapCoord(worldPos, map.SizeFactor, map.OffsetX, map.OffsetY, GetCurrentTerritoryZOffset());
+            return GetMapCoord(worldPos, map.Value.SizeFactor, map.Value.OffsetX, map.Value.OffsetY, GetCurrentTerritoryZOffset());
         }
 
         // Among valid maps, all that officially has no Z coord has Z-offset of -10000
@@ -176,7 +176,7 @@ namespace AetherCompass.Common
         {
             var map = ZoneWatcher.CurrentMap;
             if (map == null) return new Vector3(float.NaN, float.NaN, float.NaN);
-            return GetWorldPosition(mapCoord, map.SizeFactor, map.OffsetX, map.OffsetY, GetCurrentTerritoryZOffset());
+            return GetWorldPosition(mapCoord, map.Value.SizeFactor, map.Value.OffsetX, map.Value.OffsetY, GetCurrentTerritoryZOffset());
         }
     }
 }
