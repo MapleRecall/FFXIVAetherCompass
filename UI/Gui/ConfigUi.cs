@@ -1,5 +1,6 @@
 using AetherCompass.Compasses;
 using AetherCompass.Game;
+using Dalamud.Interface.Utility.Raii;
 using ImGuiNET;
 using System.Diagnostics;
 using System.Numerics;
@@ -158,22 +159,29 @@ public static class ConfigUi
 		}
 		ImGui.NewLine();
 
-		// Norification
-		ImGuiEx.Checkbox("Enable chat notification", ref Plugin.Config.NotifyChat,
-			"If enabled, will allow compasses to send notifications in game chat when detected an object.\n\n" +
-			"You can configure this for each compass separately below. ");
-		if (Plugin.Config.NotifyChat)
+		ImGui.Text("NOTE: Notifications are temporarily disabled due to causing crashes");
+		using (var disabled = ImRaii.Disabled())
 		{
-			ImGui.TreePush();
-			ImGuiEx.Checkbox("Also enable sound notification", ref Plugin.Config.NotifySe,
-				"If enabled, will allow compasses to make sound notification alongside chat notification.\n\n" +
-				"You can configure this for each compass separately below.");
-			ImGui.TreePop();
+			if (disabled.Success)
+			{
+				// Notification
+				ImGuiEx.Checkbox("Enable chat notification", ref Plugin.Config.NotifyChat,
+					"If enabled, will allow compasses to send notifications in game chat when detected an object.\n\n" +
+					"You can configure this for each compass separately below. ");
+				if (Plugin.Config.NotifyChat)
+				{
+					ImGui.TreePush();
+					ImGuiEx.Checkbox("Also enable sound notification", ref Plugin.Config.NotifySe,
+						"If enabled, will allow compasses to make sound notification alongside chat notification.\n\n" +
+						"You can configure this for each compass separately below.");
+					ImGui.TreePop();
+				}
+				ImGuiEx.Checkbox("Enable Toast notification", ref Plugin.Config.NotifyToast,
+					"If enabled, will allow compasses to make Toast notifications on screen when detected an object.\n\n" +
+					"You can configure this for each compass separately below.");
+				ImGui.NewLine();
+			}
 		}
-		ImGuiEx.Checkbox("Enable Toast notification", ref Plugin.Config.NotifyToast,
-			"If enabled, will allow compasses to make Toast notifications on screen when detected an object.\n\n" +
-			"You can configure this for each compass separately below.");
-		ImGui.NewLine();
 
 #if DEBUG
 		// Debug
@@ -181,26 +189,26 @@ public static class ConfigUi
 		ImGui.NewLine();
 #endif
 
-		ImGui.Checkbox("Show Sponsor/Support button", ref Plugin.Config.ShowSponsor);
-		if (Plugin.Config.ShowSponsor)
-		{
-			ImGui.Indent();
-			ImGui.PushStyleColor(ImGuiCol.Button, 0xFF000000 | 0x005E5BFF);
-			ImGui.PushStyleColor(ImGuiCol.ButtonActive, 0xDD000000 | 0x005E5BFF);
-			ImGui.PushStyleColor(ImGuiCol.ButtonHovered, 0xAA000000 | 0x005E5BFF);
-			if (ImGuiEx.Button("Buy Yomishino a Coffee",
-				"You can support me and buy me a coffee if you want.\n" +
-				"(Will open external link to Ko-fi in your browser)"))
-			{
-				Process.Start(new ProcessStartInfo
-				{
-					FileName = "https://ko-fi.com/yomishino",
-					UseShellExecute = true
-				});
-			}
-			ImGui.PopStyleColor(3);
-			ImGui.Unindent();
-		}
+		//ImGui.Checkbox("Show Sponsor/Support button", ref Plugin.Config.ShowSponsor);
+		//if (Plugin.Config.ShowSponsor)
+		//{
+		//	ImGui.Indent();
+		//	ImGui.PushStyleColor(ImGuiCol.Button, 0xFF000000 | 0x005E5BFF);
+		//	ImGui.PushStyleColor(ImGuiCol.ButtonActive, 0xDD000000 | 0x005E5BFF);
+		//	ImGui.PushStyleColor(ImGuiCol.ButtonHovered, 0xAA000000 | 0x005E5BFF);
+		//	if (ImGuiEx.Button("Buy Yomishino a Coffee",
+		//		"You can support me and buy me a coffee if you want.\n" +
+		//		"(Will open external link to Ko-fi in your browser)"))
+		//	{
+		//		Process.Start(new ProcessStartInfo
+		//		{
+		//			FileName = "https://ko-fi.com/yomishino",
+		//			UseShellExecute = true
+		//		});
+		//	}
+		//	ImGui.PopStyleColor(3);
+		//	ImGui.Unindent();
+		//}
 		ImGui.NewLine();
 	}
 
