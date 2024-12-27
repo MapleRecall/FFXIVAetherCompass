@@ -1,5 +1,6 @@
 using AetherCompass.Game.SeFunctions;
 using Dalamud.Game.Text.SeStringHandling;
+using FFXIVClientStructs.FFXIV.Client.UI;
 using System.Threading.Tasks;
 
 namespace AetherCompass.UI;
@@ -8,14 +9,14 @@ public static class Notifier
 {
 	private static DateTime lastSeNotifiedTime = DateTime.MinValue;
 
-	public static async void TryNotifyByChat(SeString msg, bool playSe, int macroSeId = 0)
+	public static async void TryNotifyByChat(SeString msg, bool playSe, int macroSeId = 1)
 	{
 		Chat.PrintChat(msg);
 		await Task.Run(() =>
 		{
 			if (playSe && CanNotifyBySe())
 			{
-				Sound.PlaySoundEffect(macroSeId);
+				UIGlobals.PlayChatSoundEffect((uint)macroSeId);
 				lastSeNotifiedTime = DateTime.UtcNow;
 			}
 		});
