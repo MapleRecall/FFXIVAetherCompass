@@ -110,9 +110,9 @@ public class PluginConfig : IPluginConfiguration
 		HideDetailInContents = config.HideDetailInContents;
 		HideInEvent = config.HideInEvent;
 		HideWhenCraftGather = config.HideWhenCraftGather;
-		NotifyChat = false; //config.NotifyChat;
-		NotifySe = false; //config.NotifySe;
-		NotifyToast = false; //config.NotifyToast;
+		NotifyChat = config.NotifyChat;
+		NotifySe = config.NotifySe;
+		NotifyToast = config.NotifyToast;
 		HideScreenMarkEnabledDistance = config.HideScreenMarkEnabledDistance;
 		HideScreenMarkIfNameplateInsideDisplayArea = config.HideScreenMarkIfNameplateInsideDisplayArea;
 

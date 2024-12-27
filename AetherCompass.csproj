@@ -1,7 +1,7 @@
 <Project Sdk="Dalamud.NET.Sdk/11.0.0">
   <PropertyGroup>
     <Authors>Cytraen, yomishino</Authors>
-    <Version>1.6.5.1</Version>
+    <Version>1.6.5.0</Version>
     <Description>An FFXIV Dalamud plugin providing a set of compasses that detect and mark certain nearby objects/NPCs.</Description>
     <RepositoryUrl>https://github.com/Cytraen/AetherCompass</RepositoryUrl>
   </PropertyGroup>

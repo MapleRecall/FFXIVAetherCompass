@@ -58,9 +58,9 @@ public abstract class Compass
 	public virtual bool MarkScreen => Plugin.Config.ShowScreenMark && CompassConfig.MarkScreen;
 	public virtual bool ShowDetail => Plugin.Config.ShowDetailWindow && CompassConfig.ShowDetail;
 
-	public virtual bool NotifyChat => false; // Plugin.Config.NotifyChat && CompassConfig.NotifyChat;
-	public virtual bool NotifySe => false; // Plugin.Config.NotifySe && CompassConfig.NotifySe;
-	public virtual bool NotifyToast => false; // Plugin.Config.NotifyToast && CompassConfig.NotifyToast;
+	public virtual bool NotifyChat => Plugin.Config.NotifyChat && CompassConfig.NotifyChat;
+	public virtual bool NotifySe => Plugin.Config.NotifySe && CompassConfig.NotifySe;
+	public virtual bool NotifyToast => Plugin.Config.NotifyToast && CompassConfig.NotifyToast;
 
 	public Compass()
 	{
