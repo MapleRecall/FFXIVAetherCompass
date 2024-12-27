@@ -158,7 +158,7 @@ public static class ConfigUi
 		}
 		ImGui.NewLine();
 
-		// Norification
+		// Notification
 		ImGuiEx.Checkbox("Enable chat notification", ref Plugin.Config.NotifyChat,
 			"If enabled, will allow compasses to send notifications in game chat when detected an object.\n\n" +
 			"You can configure this for each compass separately below. ");
@@ -180,28 +180,6 @@ public static class ConfigUi
 		ImGuiEx.Checkbox("[DEBUG] Test all GameObjects", ref Plugin.Config.DebugTestAllGameObjects);
 		ImGui.NewLine();
 #endif
-
-		ImGui.Checkbox("Show Sponsor/Support button", ref Plugin.Config.ShowSponsor);
-		if (Plugin.Config.ShowSponsor)
-		{
-			ImGui.Indent();
-			ImGui.PushStyleColor(ImGuiCol.Button, 0xFF000000 | 0x005E5BFF);
-			ImGui.PushStyleColor(ImGuiCol.ButtonActive, 0xDD000000 | 0x005E5BFF);
-			ImGui.PushStyleColor(ImGuiCol.ButtonHovered, 0xAA000000 | 0x005E5BFF);
-			if (ImGuiEx.Button("Buy Yomishino a Coffee",
-				"You can support me and buy me a coffee if you want.\n" +
-				"(Will open external link to Ko-fi in your browser)"))
-			{
-				Process.Start(new ProcessStartInfo
-				{
-					FileName = "https://ko-fi.com/yomishino",
-					UseShellExecute = true
-				});
-			}
-			ImGui.PopStyleColor(3);
-			ImGui.Unindent();
-		}
-		ImGui.NewLine();
 	}
 
 	private static Vector4 GetDisplayAreaFromConfigScreenMarkConstraint()
