@@ -261,9 +261,8 @@ public class IslandSanctuaryCompass : Compass
 		}
 		foreach (var row in gatheringSheet)
 		{
-			if (row.Name.ValueNullable == null) continue;
 			var name = Language.SanitizeText(
-				eObjNameSheet?.GetRow(row.Name.Value.RowId).Singular.ExtractText() ?? string.Empty);
+				eObjNameSheet?.GetRow(row.Name.ValueNullable?.RowId ?? 2000000).Singular.ExtractText() ?? string.Empty);
 			var data = new IslandGatheringObjectData(
 					row.RowId, row.Name.RowId, row.MapIcon, name);
 			islandGatherDict.Add(row.Name.RowId, data);
