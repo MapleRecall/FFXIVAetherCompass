@@ -1,7 +1,7 @@
-using Dalamud.Interface.Textures;
 using System.Collections.Concurrent;
 using System.Numerics;
 using System.Threading.Tasks;
+using Dalamud.Interface.Textures;
 
 namespace AetherCompass.UI.Gui;
 
@@ -37,9 +37,11 @@ public sealed class IconManager : IDisposable
 	// 60541 up, 60545 down; there are also two sets that are smaller
 	public const uint DirectionScreenIndicatorIconId = 60541;
 
-	internal ISharedImmediateTexture? DirectionScreenIndicatorIcon => iconMap[DirectionScreenIndicatorIconId];
+	internal ISharedImmediateTexture? DirectionScreenIndicatorIcon =>
+		iconMap[DirectionScreenIndicatorIconId];
 	public static readonly Vector2 DirectionScreenIndicatorIconSize = new(45, 45);
-	public static readonly uint DirectionScreenIndicatorIconColour = ImGuiNET.ImGui.ColorConvertFloat4ToU32(new Vector4(1, 1, 0, 1));
+	public static readonly uint DirectionScreenIndicatorIconColour =
+		ImGuiNET.ImGui.ColorConvertFloat4ToU32(new(1, 1, 0, 1));
 
 	public static readonly Vector2 MarkerIconSize = new(30, 30);
 
@@ -65,7 +67,8 @@ internal class ConcurrentIconMap : IDisposable
 	{
 		get
 		{
-			if (iconId == 0) return null;
+			if (iconId == 0)
+				return null;
 			if (map.TryGetValue(iconId, out var tex))
 				return tex.Value;
 			LoadIconAsync(iconId);
@@ -75,7 +78,8 @@ internal class ConcurrentIconMap : IDisposable
 
 	public bool Remove(uint id)
 	{
-		if (id == 0) return false;
+		if (id == 0)
+			return false;
 		var removed = map.TryRemove(id, out _);
 		//tex?.Value?.Dispose();
 		return removed;
@@ -89,9 +93,13 @@ internal class ConcurrentIconMap : IDisposable
 
 	private async void LoadIconAsync(uint iconId)
 	{
-		var icon = await Task.Run(() => Plugin.TextureProvider.GetFromGameIcon(iconId)) ?? throw new IconLoadFailException(iconId);
-		map.TryAdd(iconId, new(() => icon,
-			System.Threading.LazyThreadSafetyMode.ExecutionAndPublication));
+		var icon =
+			await Task.Run(() => Plugin.TextureProvider.GetFromGameIcon(iconId))
+			?? throw new IconLoadFailException(iconId);
+		map.TryAdd(
+			iconId,
+			new(() => icon, System.Threading.LazyThreadSafetyMode.ExecutionAndPublication)
+		);
 	}
 
 	private bool disposed;
@@ -119,6 +127,6 @@ public class IconLoadFailException : Exception
 {
 	public readonly uint IconId;
 
-	public IconLoadFailException(uint iconId) : base($"Failed to load icon: {iconId}")
-		=> IconId = iconId;
+	public IconLoadFailException(uint iconId)
+		: base($"Failed to load icon: {iconId}") => IconId = iconId;
 }

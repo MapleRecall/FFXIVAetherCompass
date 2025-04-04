@@ -17,14 +17,15 @@ public class QuestCompass : Compass
 	public override string CompassName => "Quest Compass";
 
 	public override string Description =>
-		"Detecting NPC/objects nearby relevant to your in-progress quests.\n" +
-		"** Currently limited functionality: battle NPCs will not be detected, " +
-		"and the compass sometimes gives inaccurate or, although more rarely, incorrect information.";
+		"Detecting NPC/objects nearby relevant to your in-progress quests.\n"
+		+ "** Currently limited functionality: battle NPCs will not be detected, "
+		+ "and the compass sometimes gives inaccurate or, although more rarely, incorrect information.";
 
 	protected override CompassConfig CompassConfig => Plugin.Config.QuestConfig;
 	private QuestCompassConfig QuestConfig => (QuestCompassConfig)CompassConfig;
 
-	private static readonly System.Reflection.PropertyInfo?[,] cachedQuestSheetToDoLocMap = new System.Reflection.PropertyInfo[24, 8];
+	private static readonly System.Reflection.PropertyInfo?[,] cachedQuestSheetToDoLocMap =
+		new System.Reflection.PropertyInfo[24, 8];
 
 	//private static readonly System.Reflection.PropertyInfo?[,] cachedQuestSheetToDoChildLocationMap = new System.Reflection.PropertyInfo[24, 7];
 	private readonly Dictionary<uint, (Quest RelatedQuest, bool TodoRevealed)> objQuestMap = [];
@@ -32,8 +33,9 @@ public class QuestCompass : Compass
 	private static readonly System.Numerics.Vector4 infoTextColour = new(.98f, .77f, .35f, 1);
 	private static readonly float infoTextShadowLightness = .1f;
 
-	private static readonly int ScreenMarkerQuestNameMaxLength
-		= Language.GetAdjustedTextMaxLength(16);
+	private static readonly int ScreenMarkerQuestNameMaxLength = Language.GetAdjustedTextMaxLength(
+		16
+	);
 
 	private const uint defaultQuestMarkerIconId = 71223;
 
@@ -43,8 +45,12 @@ public class QuestCompass : Compass
 	// because +0 is the dummy, so 1st icon in the range would start from +1.
 	// Each type has available and locked ver, but rn idk how to accurately tell if a quest is avail or locked
 	private static uint GetQuestMarkerIconId(
-		uint baseIconId, byte iconRange, bool questLastSeq = false)
-		=> baseIconId + iconRange switch
+		uint baseIconId,
+		byte iconRange,
+		bool questLastSeq = false
+	) =>
+		baseIconId
+		+ iconRange switch
 		{
 			6 => questLastSeq ? 5u : 3u,
 			1 => 0,
@@ -56,64 +62,85 @@ public class QuestCompass : Compass
 		var terr = ZoneWatcher.CurrentTerritoryType;
 		// 0 is noninstance, 1 is solo instance
 		return terr?.ExclusiveType == 0
-			|| ((QuestConfig?.EnabledInSoloContents ?? false) && terr?.ExclusiveType == 1)
-			;
+			|| ((QuestConfig?.EnabledInSoloContents ?? false) && terr?.ExclusiveType == 1);
 	}
 
 	public override unsafe bool IsObjective(GameObject* o)
 	{
-		if (o == null) return false;
+		if (o == null)
+			return false;
 		var kind = o->ObjectKind;
-		uint dataId = o->BaseId;
-		if (dataId == 0) return false;
+		var dataId = o->BaseId;
+		if (dataId == 0)
+			return false;
 		// NOTE: already considered hidden quests or those not revealed by Todos when filling up objQuestMap
 		// TODO: AreaObject???
-		if (kind == ObjectKind.EventNpc || kind == ObjectKind.EventObj || kind == ObjectKind.AreaObject)
+		if (
+			kind == ObjectKind.EventNpc
+			|| kind == ObjectKind.EventObj
+			|| kind == ObjectKind.AreaObject
+		)
 			return objQuestMap.ContainsKey(o->BaseId);
 		return false;
 	}
 
-	protected override unsafe string
-		GetClosestObjectiveDescription(CachedCompassObjective objective)
-			=> objective.Name + " (Quest)";
+	protected override string GetClosestObjectiveDescription(CachedCompassObjective objective) =>
+		objective.Name + " (Quest)";
 
-	public override unsafe DrawAction? CreateDrawDetailsAction(CachedCompassObjective objective)
+	public override DrawAction? CreateDrawDetailsAction(CachedCompassObjective objective)
 	{
-		if (objective.IsEmpty()) return null;
-		if (!objQuestMap.TryGetValue(objective.DataId, out var mappedInfo)) return null;
+		if (objective.IsEmpty())
+			return null;
+		if (!objQuestMap.TryGetValue(objective.DataId, out var mappedInfo))
+			return null;
 		var questId = mappedInfo.RelatedQuest.QuestID;
-		return new(() =>
-		{
-			ImGui.Text($"{objective.Name} {(mappedInfo.TodoRevealed ? "★" : "")}");
-			ImGui.BulletText($"Quest: {Language.SanitizeText(GetQuestName(questId))}");
-#if DEBUG
-			var qItem = GetQuestRow(questId);
-			if (qItem != null)
+		return new(
+			() =>
 			{
-				ImGui.BulletText(
-					$"JournalGenre: {qItem.Value.JournalGenre.ValueNullable?.Name ?? string.Empty} #{qItem.Value.JournalGenre.ValueNullable?.RowId}, " +
-					$"Type: {qItem.Value.Type}");
-			}
+				ImGui.Text($"{objective.Name} {(mappedInfo.TodoRevealed ? "★" : "")}");
+				ImGui.BulletText($"Quest: {Language.SanitizeText(GetQuestName(questId))}");
+#if DEBUG
+				var qItem = GetQuestRow(questId);
+				if (qItem != null)
+				{
+					ImGui.BulletText(
+						$"JournalGenre: {qItem.Value.JournalGenre.ValueNullable?.Name ?? string.Empty} #{qItem.Value.JournalGenre.ValueNullable?.RowId}, "
+							+ $"Type: {qItem.Value.Type}"
+					);
+				}
 #endif
-			ImGui.BulletText($"{CompassUtil.MapCoordToFormattedString(objective.CurrentMapCoord)} (approx.)");
-			ImGui.BulletText($"{objective.CompassDirectionFromPlayer},  " +
-				$"{CompassUtil.DistanceToDescriptiveString(objective.Distance3D, false)}");
-			ImGui.BulletText(CompassUtil.AltitudeDiffToDescriptiveString(objective.AltitudeDiff));
-			DrawFlagButton($"##{(long)objective.GameObject}", objective.CurrentMapCoord);
-			ImGui.Separator();
-		}, mappedInfo.RelatedQuest.IsPriority);
+				ImGui.BulletText(
+					$"{CompassUtil.MapCoordToFormattedString(objective.CurrentMapCoord)} (approx.)"
+				);
+				ImGui.BulletText(
+					$"{objective.CompassDirectionFromPlayer},  "
+						+ $"{CompassUtil.DistanceToDescriptiveString(objective.Distance3D, false)}"
+				);
+				ImGui.BulletText(
+					CompassUtil.AltitudeDiffToDescriptiveString(objective.AltitudeDiff)
+				);
+				DrawFlagButton($"##{(long)objective.GameObject}", objective.CurrentMapCoord);
+				ImGui.Separator();
+			},
+			mappedInfo.RelatedQuest.IsPriority
+		);
 	}
 
-	public override unsafe DrawAction? CreateMarkScreenAction(CachedCompassObjective objective)
+	public override DrawAction? CreateMarkScreenAction(CachedCompassObjective objective)
 	{
-		if (objective.IsEmpty()) return null;
-		if (!objQuestMap.TryGetValue(objective.DataId, out var mappedInfo)) return null;
+		if (objective.IsEmpty())
+			return null;
+		if (!objQuestMap.TryGetValue(objective.DataId, out var mappedInfo))
+			return null;
 		var qRow = GetQuestRow(mappedInfo.RelatedQuest.QuestID);
-		var iconId = qRow == null || qRow.Value.EventIconType.ValueNullable == null
-			? defaultQuestMarkerIconId
-			: GetQuestMarkerIconId(qRow.Value.EventIconType.Value.NpcIconAvailable,
-				qRow.Value.EventIconType.Value.IconRange,
-				mappedInfo.RelatedQuest.QuestSeq == questFinalSeqIdx);
+		var iconId =
+			qRow == null || qRow.Value.EventIconType.ValueNullable == null
+				? defaultQuestMarkerIconId
+				: GetQuestMarkerIconId(
+					qRow.Value.EventIconType.Value.NpcIconAvailable,
+					qRow.Value.EventIconType.Value.IconRange,
+					mappedInfo.RelatedQuest.QuestSeq == questFinalSeqIdx
+				);
 		var descr = (mappedInfo.TodoRevealed ? "★ " : "") + $"{objective.Name}";
 		if (QuestConfig.ShowQuestName)
 		{
@@ -122,45 +149,69 @@ public class QuestCompass : Compass
 			{
 				if (questName.Length > ScreenMarkerQuestNameMaxLength)
 					questName = questName[..ScreenMarkerQuestNameMaxLength] + "..";
-				descr += $" (Quest: {questName}), {CompassUtil.DistanceToDescriptiveString(objective.Distance3D, true)}";
+				descr +=
+					$" (Quest: {questName}), {CompassUtil.DistanceToDescriptiveString(objective.Distance3D, true)}";
 			}
-			else descr += $", {CompassUtil.DistanceToDescriptiveString(objective.Distance3D, true)}" +
-					$"\n(Quest: {questName})";
+			else
+				descr +=
+					$", {CompassUtil.DistanceToDescriptiveString(objective.Distance3D, true)}"
+					+ $"\n(Quest: {questName})";
 		}
-		else descr += $", {CompassUtil.DistanceToDescriptiveString(objective.Distance3D, true)}";
-		return GenerateDefaultScreenMarkerDrawAction(objective, iconId,
-			DefaultMarkerIconSize, .9f, descr, infoTextColour, infoTextShadowLightness, out _,
-			important: objective.Distance3D < 55 || mappedInfo.RelatedQuest.IsPriority);
+		else
+			descr += $", {CompassUtil.DistanceToDescriptiveString(objective.Distance3D, true)}";
+		return GenerateDefaultScreenMarkerDrawAction(
+			objective,
+			iconId,
+			DefaultMarkerIconSize,
+			.9f,
+			descr,
+			infoTextColour,
+			infoTextShadowLightness,
+			out _,
+			important: objective.Distance3D < 55 || mappedInfo.RelatedQuest.IsPriority
+		);
 	}
 
 	public override void DrawConfigUiExtra()
 	{
 		ImGui.BulletText("More options:");
 		ImGui.Indent();
-		ImGuiEx.Checkbox("Also enable this compass in solo instanced contents", ref QuestConfig.EnabledInSoloContents,
-			"By default, this compass will not work in any type of instanced contents.\n" +
-			"You can enable it in solo instanced contents if needed.");
+		ImGuiEx.Checkbox(
+			"Also enable this compass in solo instanced contents",
+			ref QuestConfig.EnabledInSoloContents,
+			"By default, this compass will not work in any type of instanced contents.\n"
+				+ "You can enable it in solo instanced contents if needed."
+		);
 		//ImGuiEx.Checkbox("Also detect quest related enemies", ref QuestConfig.DetectEnemy,
 		//    "By default, this compass will only detect event NPCs or objects, that is, NPCs/Objects that don't fight.\n" +
 		//    "You can enable this option to have the compass detect also quest related enemies.");
-		ImGuiEx.Checkbox("Don't detect hidden quests", ref QuestConfig.HideHidden,
-			"Hidden quests are those that you've marked as ignored in Journal.\n" +
-			"If this option is enabled, will not detect NPC/Objects related to these hidden quests.");
-		ImGuiEx.Checkbox("Detect all NPCs and objects relevant to in-progress quests", ref QuestConfig.ShowAllRelated,
-			"By default, this compass only detects NPC/objects that are objectives of the quests " +
-			"as shown in the quest Todos and on the Minimap.\n\n" +
-			"If this option is enabled, NPC/objects that are spawned due to the quests will also " +
-			"be detected by this compass, even if they may not be the objectives of the quests.\n" +
-			"Additionally, for quests that require looking for NPC/objects in a certain area, " +
-			"enabling this option may reveal the objectives' locations.\n\n" +
-			"In either case, NPC/objects that are known to be quest objectives will have a \"★\" mark by their names.");
+		ImGuiEx.Checkbox(
+			"Don't detect hidden quests",
+			ref QuestConfig.HideHidden,
+			"Hidden quests are those that you've marked as ignored in Journal.\n"
+				+ "If this option is enabled, will not detect NPC/Objects related to these hidden quests."
+		);
+		ImGuiEx.Checkbox(
+			"Detect all NPCs and objects relevant to in-progress quests",
+			ref QuestConfig.ShowAllRelated,
+			"By default, this compass only detects NPC/objects that are objectives of the quests "
+				+ "as shown in the quest Todos and on the Minimap.\n\n"
+				+ "If this option is enabled, NPC/objects that are spawned due to the quests will also "
+				+ "be detected by this compass, even if they may not be the objectives of the quests.\n"
+				+ "Additionally, for quests that require looking for NPC/objects in a certain area, "
+				+ "enabling this option may reveal the objectives' locations.\n\n"
+				+ "In either case, NPC/objects that are known to be quest objectives will have a \"★\" mark by their names."
+		);
 		if (MarkScreen)
 		{
 			ImGui.Checkbox("Show quest name by screen marker", ref QuestConfig.ShowQuestName);
 			if (QuestConfig.ShowQuestName)
-				ImGuiEx.Checkbox("Show screen marker text in one line", ref QuestConfig.MarkerTextInOneLine,
-					"Display the whole label text in one line.\n" +
-					"May only display part of the quest name to avoid the text being too long.");
+				ImGuiEx.Checkbox(
+					"Show screen marker text in one line",
+					ref QuestConfig.MarkerTextInOneLine,
+					"Display the whole label text in one line.\n"
+						+ "May only display part of the quest name to avoid the text being too long."
+				);
 		}
 		ImGui.Unindent();
 	}
@@ -181,29 +232,31 @@ public class QuestCompass : Compass
 
 	private static ushort QuestRowIdToQuestId(uint questRowId)
 	{
-		if (questRowId <= 65536) return 0;
+		if (questRowId <= 65536)
+			return 0;
 		var id = questRowId - 65536;
-		if (id <= ushort.MaxValue) return (ushort)id;
+		if (id <= ushort.MaxValue)
+			return (ushort)id;
 		return 0;
 	}
 
-	private static readonly ExcelSheet<Sheets.Quest>? QuestSheet
-		= Plugin.DataManager.GetExcelSheet<Sheets.Quest>();
+	private static readonly ExcelSheet<Sheets.Quest>? QuestSheet =
+		Plugin.DataManager.GetExcelSheet<Sheets.Quest>();
 
-	private static readonly ExcelSheet<Sheets.EObj>? EObjSheet
-		= Plugin.DataManager.GetExcelSheet<Sheets.EObj>();
+	private static readonly ExcelSheet<Sheets.EObj>? EObjSheet =
+		Plugin.DataManager.GetExcelSheet<Sheets.EObj>();
 
-	private static readonly ExcelSheet<Sheets.ENpcBase>? ENpcSheet
-		= Plugin.DataManager.GetExcelSheet<Sheets.ENpcBase>();
+	private static readonly ExcelSheet<Sheets.ENpcBase>? ENpcSheet =
+		Plugin.DataManager.GetExcelSheet<Sheets.ENpcBase>();
 
-	private static readonly ExcelSheet<Sheets.Level>? LevelSheet
-		= Plugin.DataManager.GetExcelSheet<Sheets.Level>();
+	private static readonly ExcelSheet<Sheets.Level>? LevelSheet =
+		Plugin.DataManager.GetExcelSheet<Sheets.Level>();
 
-	private static Sheets.Quest? GetQuestRow(ushort questId)
-		=> QuestSheet?.GetRow(QuestIdToQuestRowId(questId));
+	private static Sheets.Quest? GetQuestRow(ushort questId) =>
+		QuestSheet?.GetRow(QuestIdToQuestRowId(questId));
 
-	private static string GetQuestName(ushort questId)
-		=> GetQuestRow(questId)?.Name.ExtractText() ?? string.Empty;
+	private static string GetQuestName(ushort questId) =>
+		GetQuestRow(questId)?.Name.ExtractText() ?? string.Empty;
 
 	// ActorSpawn, ActorDespawn, Listener, etc.
 	private const int questSheetActorArrayLength = 64;
@@ -221,23 +274,30 @@ public class QuestCompass : Compass
 			return;
 		}
 
-		static bool ShouldExitActorArrayLoop(Sheets.Quest q, int idx)
-			=> (idx >= 0 && idx < questSheetActorArrayLength / 2 && q.QuestListenerParams[idx].QuestUInt8A == 0);
+		static bool ShouldExitActorArrayLoop(Sheets.Quest q, int idx) =>
+			(
+				idx >= 0
+				&& idx < questSheetActorArrayLength / 2
+				&& q.QuestListenerParams[idx].QuestUInt8A == 0
+			);
 		// TODO complete API11/7.1 update
 		//|| (idx >= questSheetActorArrayLength / 2 && idx < questSheetActorArrayLength
 		//    && q.QuestListenerParams[idx - questSheetActorArrayLength / 2].QuestUInt8B == 0);
 
-		for (int i = 0; i < Quests.QuestListArrayLength; i++)
+		for (var i = 0; i < Quests.QuestListArrayLength; i++)
 		{
 			var quest = questlist[i];
-			if (quest.QuestID == 0) continue;
-			if (quest.IsHidden && QuestConfig.HideHidden) continue;
+			if (quest.QuestID == 0)
+				continue;
+			if (quest.IsHidden && QuestConfig.HideHidden)
+				continue;
 			var questRow = GetQuestRow(quest.QuestID);
-			if (questRow == null) continue;
+			if (questRow == null)
+				continue;
 
 			// ToDos: find out objective gameobjs revealed by ToDos, if any
 			HashSet<uint> todoRevealedObjs = [];
-			for (int j = 0; j < questSheetToDoArrayLength; j++)
+			for (var j = 0; j < questSheetToDoArrayLength; j++)
 			{
 				// NOTE: ignore Level location for now,
 				// because we cant tell if the ToDos are completed or not when there are multiple Todos
@@ -258,7 +318,7 @@ public class QuestCompass : Compass
 					//}
 
 					// Main + Child
-					for (int k = 0; k < questSheetToDoChildMaxCount + 1; k++)
+					for (var k = 0; k < questSheetToDoChildMaxCount + 1; k++)
 					{
 						var todoLocRowId = GetQuestToDoLocRowId(questRow, j, k);
 						if (todoLocRowId > 0)
@@ -269,30 +329,44 @@ public class QuestCompass : Compass
 						}
 					}
 				}
-				if (questRow.Value.TodoParams[j].ToDoCompleteSeq == questFinalSeqIdx) break;
+				if (questRow.Value.TodoParams[j].ToDoCompleteSeq == questFinalSeqIdx)
+					break;
 			}
 
 			// Actor related arrays: find out related gameobjs
 			List<uint> objsThisSeq = []; // objectives (usually listeners) that will be deactivated when this Seq completes
-			for (int j = 0; j < questSheetActorArrayLength; j++)
+			for (var j = 0; j < questSheetActorArrayLength; j++)
 			{
-				if (ShouldExitActorArrayLoop(questRow.Value, j)) break;
+				if (ShouldExitActorArrayLoop(questRow.Value, j))
+					break;
 				var listener = questRow.Value.QuestListenerParams[j].Listener;
 				// Track ConditionValue if ConditionType non-zero instead of listener itself;
 				// this usually happens with BNpc etc. which we don't consider yet, but anyway
-				var objToTrack = questRow.Value.QuestListenerParams[j].ConditionType > 0 ? questRow.Value.QuestListenerParams[j].ConditionValue : listener;
-				bool todoRevealed = todoRevealedObjs.Contains(objToTrack);
+				var objToTrack =
+					questRow.Value.QuestListenerParams[j].ConditionType > 0
+						? questRow.Value.QuestListenerParams[j].ConditionValue
+						: listener;
+				var todoRevealed = todoRevealedObjs.Contains(objToTrack);
 				// Skip those not revealed by ToDos if option not enabled
-				if (!QuestConfig.ShowAllRelated && !todoRevealed) continue;
-				if (questRow.Value.QuestListenerParams[j].ActorSpawnSeq == 0) continue; // Invalid? usually won't have this
-				if (questRow.Value.QuestListenerParams[j].ActorSpawnSeq > quest.QuestSeq) continue; // Not spawn/active yet
-				if (questRow.Value.QuestListenerParams[j].ActorDespawnSeq < questSheetToDoArrayLength)
+				if (!QuestConfig.ShowAllRelated && !todoRevealed)
+					continue;
+				if (questRow.Value.QuestListenerParams[j].ActorSpawnSeq == 0)
+					continue; // Invalid? usually won't have this
+				if (questRow.Value.QuestListenerParams[j].ActorSpawnSeq > quest.QuestSeq)
+					continue; // Not spawn/active yet
+				if (
+					questRow.Value.QuestListenerParams[j].ActorDespawnSeq
+					< questSheetToDoArrayLength
+				)
 				{
 					// I think ActorDespawnSeq corresponds to ToDo idx, not Seq
-					var despawnSeq = questRow.Value.TodoParams[questRow.Value.QuestListenerParams[j].ActorDespawnSeq].ToDoCompleteSeq;
+					var despawnSeq = questRow
+						.Value
+						.TodoParams[questRow.Value.QuestListenerParams[j].ActorDespawnSeq]
+						.ToDoCompleteSeq;
 					if (despawnSeq < quest.QuestSeq)
 						continue; // Despawned/deactivated when previous Seq ends
-								  // TODO: should we also check if it's spawned at start of this Seq?
+					// TODO: should we also check if it's spawned at start of this Seq?
 					if (despawnSeq == quest.QuestSeq)
 						objsThisSeq.Add(objToTrack);
 				}
@@ -302,7 +376,7 @@ public class QuestCompass : Compass
 			// Filter out already interacted ones
 			if (quest.ObjectiveObjectsInteractedFlags != 0)
 			{
-				for (int k = 0; k < objsThisSeq.Count; k++)
+				for (var k = 0; k < objsThisSeq.Count; k++)
 					if (quest.IsObjectiveInteracted(k))
 						objQuestMap.Remove(objsThisSeq[k]);
 			}
@@ -312,15 +386,22 @@ public class QuestCompass : Compass
 	// The uint stored in the cell is the corresponding row id in Level sheet
 	private static uint GetQuestToDoLocRowId(Sheets.Quest? questRow, int row, int col)
 	{
-		if (row < 0 || row >= questSheetToDoArrayLength
-			|| col < 0 || col >= questSheetToDoChildMaxCount + 1
-			|| questRow == null) return 0;
+		if (
+			row < 0
+			|| row >= questSheetToDoArrayLength
+			|| col < 0
+			|| col >= questSheetToDoChildMaxCount + 1
+			|| questRow == null
+		)
+			return 0;
 		var val = cachedQuestSheetToDoLocMap[row, col]?.GetValue(questRow);
 		// First 7 cells (from col 1221) is put in an array accessed via Unknown1221
-		if (val == null) return 0;
+		if (val == null)
+			return 0;
 		if (row <= 7 && col == 0)
 			return (val as uint[])?[row] ?? 0;
-		else return (uint)val;
+		else
+			return (uint)val;
 	}
 
 	//// ToDoChildLocation is 24 * 7 array containing row id of corresponding Level
@@ -350,17 +431,19 @@ public class QuestCompass : Compass
 	private static void InitQuestSheetToDoLocMap()
 	{
 		var questSheetType = typeof(Sheets.Quest);
-		int propIdx0 = 1221;
-		for (int i = 0; i < questSheetToDoArrayLength; i++)
+		var propIdx0 = 1221;
+		for (var i = 0; i < questSheetToDoArrayLength; i++)
 		{
 			// Main
-			cachedQuestSheetToDoLocMap[i, 0] = i <= 7
-				? questSheetType.GetProperty($"Unknown{propIdx0}")
-				: questSheetType.GetProperty($"Unknown{propIdx0 + i}");
+			cachedQuestSheetToDoLocMap[i, 0] =
+				i <= 7
+					? questSheetType.GetProperty($"Unknown{propIdx0}")
+					: questSheetType.GetProperty($"Unknown{propIdx0 + i}");
 			// Child
-			for (int j = 0; j < questSheetToDoChildMaxCount; j++)
-				cachedQuestSheetToDoLocMap[i, j]
-					= questSheetType.GetProperty($"Unknown{propIdx0 + j * 24 + i}");
+			for (var j = 0; j < questSheetToDoChildMaxCount; j++)
+				cachedQuestSheetToDoLocMap[i, j] = questSheetType.GetProperty(
+					$"Unknown{propIdx0 + j * 24 + i}"
+				);
 		}
 	}
 
@@ -387,7 +470,7 @@ public class QuestCompass : Compass
 	//    }
 	//}
 
-	public QuestCompass() : base()
+	public QuestCompass()
 	{
 		InitQuestSheetToDoLocMap();
 		//InitQuestSheetToDoChildLocationMap();

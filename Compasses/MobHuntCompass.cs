@@ -1,3 +1,4 @@
+using System.Numerics;
 using AetherCompass.Common;
 using AetherCompass.Common.Attributes;
 using AetherCompass.Compasses.Configs;
@@ -7,7 +8,6 @@ using FFXIVClientStructs.FFXIV.Client.Game.Object;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using ImGuiNET;
 using Lumina.Excel;
-using System.Numerics;
 
 namespace AetherCompass.Compasses;
 
@@ -28,63 +28,96 @@ public class MobHuntCompass : Compass
 	protected override CompassConfig CompassConfig => Plugin.Config.MobHuntConfig;
 	private MobHuntCompassConfig MobHuntConfig => (MobHuntCompassConfig)CompassConfig;
 
-	public override bool IsEnabledInCurrentTerritory()
-		=> ZoneWatcher.CurrentTerritoryType?.TerritoryIntendedUse.ValueNullable?.RowId == 1;
+	public override bool IsEnabledInCurrentTerritory() =>
+		ZoneWatcher.CurrentTerritoryType?.TerritoryIntendedUse.ValueNullable?.RowId == 1;
 
-	public override unsafe bool IsObjective(GameObject* o)
-		=> o != null && nmDataMap.TryGetValue(o->BaseId, out var data) && data.IsValid
-		&& ((data.Rank == NMRank.S && MobHuntConfig.DetectS)
+	public override unsafe bool IsObjective(GameObject* o) =>
+		o != null
+		&& nmDataMap.TryGetValue(o->BaseId, out var data)
+		&& data.IsValid
+		&& (
+			(data.Rank == NMRank.S && MobHuntConfig.DetectS)
 			|| (data.Rank == NMRank.A && MobHuntConfig.DetectA)
-			|| (data.Rank == NMRank.B && !CompassUtil.IsHostileCharacter(o) && MobHuntConfig.DetectB)
-			|| (data.Rank == NMRank.B && CompassUtil.IsHostileCharacter(o) && MobHuntConfig.DetectSSMinion))
+			|| (
+				data.Rank == NMRank.B && !CompassUtil.IsHostileCharacter(o) && MobHuntConfig.DetectB
+			)
+			|| (
+				data.Rank == NMRank.B
+				&& CompassUtil.IsHostileCharacter(o)
+				&& MobHuntConfig.DetectSSMinion
+			)
+		)
 		&& CompassUtil.IsCharacterAlive(o);
 
-	protected override unsafe CachedCompassObjective CreateCompassObjective(GameObject* obj)
-		=> obj != null && nmDataMap.TryGetValue(obj->BaseId, out var data) && data.IsValid
-		? new MobHunCachedCompassObjective(obj, data.Rank, CompassUtil.IsHostileCharacter(obj))
-		: new MobHunCachedCompassObjective(obj, 0, false);
+	protected override unsafe CachedCompassObjective CreateCompassObjective(GameObject* obj) =>
+		obj != null && nmDataMap.TryGetValue(obj->BaseId, out var data) && data.IsValid
+			? new(obj, data.Rank, CompassUtil.IsHostileCharacter(obj))
+			: new MobHunCachedCompassObjective(obj, 0, false);
 
-	protected override unsafe CachedCompassObjective CreateCompassObjective(UI3DModule.ObjectInfo* info)
+	protected override unsafe CachedCompassObjective CreateCompassObjective(
+		UI3DModule.ObjectInfo* info
+	)
 	{
 		var obj = info != null ? info->GameObject : null;
-		if (obj == null) return new MobHunCachedCompassObjective(obj, 0, false);
+		if (obj == null)
+			return new MobHunCachedCompassObjective(obj, 0, false);
 		return nmDataMap.TryGetValue(obj->BaseId, out var data) && data.IsValid
-			? new MobHunCachedCompassObjective(info, data.Rank, CompassUtil.IsHostileCharacter(obj))
+			? new(info, data.Rank, CompassUtil.IsHostileCharacter(obj))
 			: new MobHunCachedCompassObjective(info, 0, false);
 	}
 
-	protected override unsafe string GetClosestObjectiveDescription(CachedCompassObjective objective)
-		=> objective.IsEmpty() || objective is not MobHunCachedCompassObjective mhObjective
-		? string.Empty : $"{mhObjective.Name} (Rank: {mhObjective.GetExtendedRank()})";
+	protected override string GetClosestObjectiveDescription(CachedCompassObjective objective) =>
+		objective.IsEmpty() || objective is not MobHunCachedCompassObjective mhObjective
+			? string.Empty
+			: $"{mhObjective.Name} (Rank: {mhObjective.GetExtendedRank()})";
 
-	public override unsafe DrawAction? CreateDrawDetailsAction(CachedCompassObjective objective)
-		=> objective.IsEmpty() || objective is not MobHunCachedCompassObjective mhObjective ? null : new(() =>
-		{
-			ImGui.Text($"{mhObjective.Name}, Rank: {mhObjective.GetExtendedRank()}");
-			ImGui.BulletText($"{CompassUtil.MapCoordToFormattedString(mhObjective.CurrentMapCoord)} (approx.)");
-			ImGui.BulletText($"{mhObjective.CurrentMapCoord},  " +
-				$"{CompassUtil.DistanceToDescriptiveString(mhObjective.Distance3D, false)}");
-			ImGui.BulletText(CompassUtil.AltitudeDiffToDescriptiveString(mhObjective.AltitudeDiff));
-			DrawFlagButton($"##{(long)mhObjective.GameObject}", mhObjective.CurrentMapCoord);
-			ImGui.Separator();
-		});
+	public override DrawAction? CreateDrawDetailsAction(CachedCompassObjective objective) =>
+		objective.IsEmpty() || objective is not MobHunCachedCompassObjective mhObjective
+			? null
+			: new(() =>
+			{
+				ImGui.Text($"{mhObjective.Name}, Rank: {mhObjective.GetExtendedRank()}");
+				ImGui.BulletText(
+					$"{CompassUtil.MapCoordToFormattedString(mhObjective.CurrentMapCoord)} (approx.)"
+				);
+				ImGui.BulletText(
+					$"{mhObjective.CurrentMapCoord},  "
+						+ $"{CompassUtil.DistanceToDescriptiveString(mhObjective.Distance3D, false)}"
+				);
+				ImGui.BulletText(
+					CompassUtil.AltitudeDiffToDescriptiveString(mhObjective.AltitudeDiff)
+				);
+				DrawFlagButton($"##{(long)mhObjective.GameObject}", mhObjective.CurrentMapCoord);
+				ImGui.Separator();
+			});
 
-	public override unsafe DrawAction? CreateMarkScreenAction(CachedCompassObjective objective)
+	public override DrawAction? CreateMarkScreenAction(CachedCompassObjective objective)
 	{
-		if (objective.IsEmpty() || objective is not MobHunCachedCompassObjective mhObjective) return null;
-		string descr = $"{mhObjective.Name} (Rank: {mhObjective.GetExtendedRank()}), " +
-			$"{CompassUtil.DistanceToDescriptiveString(mhObjective.Distance3D, true)}";
+		if (objective.IsEmpty() || objective is not MobHunCachedCompassObjective mhObjective)
+			return null;
+		var descr =
+			$"{mhObjective.Name} (Rank: {mhObjective.GetExtendedRank()}), "
+			+ $"{CompassUtil.DistanceToDescriptiveString(mhObjective.Distance3D, true)}";
 		var iconId = mhObjective.Rank switch
 		{
 			NMRank.S => rankSMarkerIconId,
 			NMRank.A => rankAMarkerIconId,
-			NMRank.B => mhObjective.IsSSMinion
-				? rankSMarkerIconId : rankBMarkerIconId,
-			_ => 0u
+			NMRank.B => mhObjective.IsSSMinion ? rankSMarkerIconId : rankBMarkerIconId,
+			_ => 0u,
 		};
-		return GenerateDefaultScreenMarkerDrawAction(objective, iconId,
-			DefaultMarkerIconSize, .9f, descr, infoTextColour, infoTextShadowLightness, out _,
-			important: mhObjective.Rank == NMRank.S || mhObjective.Rank == NMRank.A || mhObjective.IsSSMinion);
+		return GenerateDefaultScreenMarkerDrawAction(
+			objective,
+			iconId,
+			DefaultMarkerIconSize,
+			.9f,
+			descr,
+			infoTextColour,
+			infoTextShadowLightness,
+			out _,
+			important: mhObjective.Rank == NMRank.S
+				|| mhObjective.Rank == NMRank.A
+				|| mhObjective.IsSSMinion
+		);
 	}
 
 	public override void DrawConfigUiExtra()
@@ -98,8 +131,8 @@ public class MobHuntCompass : Compass
 		ImGui.Unindent();
 	}
 
-	private static ExcelSheet<Sheets.NotoriousMonster>? NMSheet
-		=> Plugin.DataManager.GetExcelSheet<Sheets.NotoriousMonster>();
+	private static ExcelSheet<Sheets.NotoriousMonster> NMSheet =>
+		Plugin.DataManager.GetExcelSheet<Sheets.NotoriousMonster>();
 
 	private void InitNMDataMap()
 	{
@@ -115,26 +148,21 @@ public class MobHuntCompass : Compass
 		}
 	}
 
-	public MobHuntCompass() : base()
+	public MobHuntCompass()
 	{
 		InitNMDataMap();
 	}
 
 	private class NMData
 	{
-		public readonly uint BNpcDataId;
-		public readonly uint NMSheetRowId;
 		public readonly NMRank Rank;
 		public readonly bool IsValid;
 
 		public NMData(uint nmSheetRowId)
 		{
-			NMSheetRowId = nmSheetRowId;
-			if (NMSheet == null) return;
 			var row = NMSheet.GetRow(nmSheetRowId);
 			// TODO complete API11/7.1 update
 			// if (row == null) return;
-			BNpcDataId = row.BNpcBase.RowId;
 			Rank = (NMRank)row.Rank;
 			IsValid = true;
 		}

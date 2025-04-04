@@ -1,5 +1,5 @@
-using Dalamud.Game.Text.SeStringHandling.Payloads;
 using System.Numerics;
+using Dalamud.Game.Text.SeStringHandling.Payloads;
 
 namespace AetherCompass.Common;
 
@@ -13,7 +13,15 @@ public class FixedMapLinkPayload : MapLinkPayload
 	private readonly float coordX;
 	private readonly float coordY;
 
-	public FixedMapLinkPayload(uint terrId, uint mapId, int rawX, int rawY, float coordX, float coordY) : base(terrId, mapId, rawX, rawY)
+	public FixedMapLinkPayload(
+		uint terrId,
+		uint mapId,
+		int rawX,
+		int rawY,
+		float coordX,
+		float coordY
+	)
+		: base(terrId, mapId, rawX, rawY)
 	{
 		this.terrId = terrId;
 		this.mapId = mapId;
@@ -21,14 +29,34 @@ public class FixedMapLinkPayload : MapLinkPayload
 		this.coordY = coordY;
 	}
 
-	public static FixedMapLinkPayload FromMapCoord(uint terrId, uint mapId, float xCoord, float yCoord)
+	public static FixedMapLinkPayload FromMapCoord(
+		uint terrId,
+		uint mapId,
+		float xCoord,
+		float yCoord
+	)
 	{
-		var map = Plugin.DataManager.GetExcelSheet<Sheets.Map>()?.GetRow(mapId);
-		if (map == null) return new(terrId, mapId, 0, 0, 0, 0);
-		return FromMapCoord(terrId, mapId, xCoord, yCoord, map.Value.SizeFactor, map.Value.OffsetX, map.Value.OffsetY);
+		var map = Plugin.DataManager.GetExcelSheet<Sheets.Map>().GetRow(mapId);
+		return FromMapCoord(
+			terrId,
+			mapId,
+			xCoord,
+			yCoord,
+			map.SizeFactor,
+			map.OffsetX,
+			map.OffsetY
+		);
 	}
 
-	public static FixedMapLinkPayload FromMapCoord(uint terrId, uint mapId, float xCoord, float yCoord, ushort scale, short offsetX, short offsetY)
+	public static FixedMapLinkPayload FromMapCoord(
+		uint terrId,
+		uint mapId,
+		float xCoord,
+		float yCoord,
+		ushort scale,
+		short offsetX,
+		short offsetY
+	)
 	{
 		// because we don't care about Z-coord here
 		var coord3 = new Vector3(xCoord, yCoord, 0);

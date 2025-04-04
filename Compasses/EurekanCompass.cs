@@ -20,51 +20,76 @@ public class EurekanCompass : Compass
 
 	private const uint elementalMarkerIconId = 15835;
 
-	private static readonly System.Numerics.Vector2
-		elementalMarkerIconSize = new(25, 25);
+	private static readonly System.Numerics.Vector2 elementalMarkerIconSize = new(25, 25);
 
-	public override bool IsEnabledInCurrentTerritory()
-		=> ZoneWatcher.CurrentTerritoryType?.TerritoryIntendedUse.ValueNullable?.RowId == 41;
+	public override bool IsEnabledInCurrentTerritory() =>
+		ZoneWatcher.CurrentTerritoryType?.TerritoryIntendedUse.ValueNullable?.RowId == 41;
 
-	protected override unsafe string GetClosestObjectiveDescription(
-		CachedCompassObjective objective) => objective.Name;
+	protected override string GetClosestObjectiveDescription(CachedCompassObjective objective) =>
+		objective.Name;
 
-	public override unsafe bool IsObjective(GameObject* o)
-		=> o != null && (o->ObjectKind == ObjectKind.BattleNpc)
+	public override unsafe bool IsObjective(GameObject* o) =>
+		o != null
+		&& (o->ObjectKind == ObjectKind.BattleNpc)
 		&& IsEurekanElementalName(CompassUtil.GetName(o));
 
-	public override unsafe DrawAction? CreateDrawDetailsAction(CachedCompassObjective objective)
+	public override DrawAction? CreateDrawDetailsAction(CachedCompassObjective objective)
 	{
-		if (objective.IsEmpty()) return null;
+		if (objective.IsEmpty())
+			return null;
 		return new(() =>
 		{
 			ImGui.Text($"{objective.Name}");
-			ImGui.BulletText($"{CompassUtil.MapCoordToFormattedString(objective.CurrentMapCoord)} (approx.)");
-			ImGui.BulletText($"{objective.CompassDirectionFromPlayer},  " +
-				$"{CompassUtil.DistanceToDescriptiveString(objective.Distance3D, false)}");
+			ImGui.BulletText(
+				$"{CompassUtil.MapCoordToFormattedString(objective.CurrentMapCoord)} (approx.)"
+			);
+			ImGui.BulletText(
+				$"{objective.CompassDirectionFromPlayer},  "
+					+ $"{CompassUtil.DistanceToDescriptiveString(objective.Distance3D, false)}"
+			);
 			ImGui.BulletText(CompassUtil.AltitudeDiffToDescriptiveString(objective.AltitudeDiff));
 			DrawFlagButton($"{(long)objective.GameObject}", objective.CurrentMapCoord);
 			ImGui.Separator();
 		});
 	}
 
-	public override unsafe DrawAction? CreateMarkScreenAction(CachedCompassObjective objective)
+	public override DrawAction? CreateMarkScreenAction(CachedCompassObjective objective)
 	{
-		if (objective.IsEmpty()) return null;
-		return GenerateDefaultScreenMarkerDrawAction(objective,
-			elementalMarkerIconId, new System.Numerics.Vector2(24, 32), .9f,
+		if (objective.IsEmpty())
+			return null;
+		return GenerateDefaultScreenMarkerDrawAction(
+			objective,
+			elementalMarkerIconId,
+			new(24, 32),
+			.9f,
 			$"{objective.Name}, {CompassUtil.DistanceToDescriptiveString(objective.Distance3D, true)}",
-			infoTextColour, infoTextShadowLightness, out _, important: objective.Distance3D < 60);
+			infoTextColour,
+			infoTextShadowLightness,
+			out _,
+			important: objective.Distance3D < 60
+		);
 	}
 
 	private static bool IsEurekanElementalName(string? name)
 	{
-		if (name == null) return false;
+		if (name == null)
+			return false;
 		name = name.ToLower();
-		return name == "hydatos elemental" || name == "pyros elemental" || name == "pagos elemental" || name == "anemos elemental"
-			|| name == "ヒュダトス・エレメンタル" || name == "パゴス・エレメンタル" || name == "ピューロス・エレメンタル" || name == "アネモス・エレメンタル"
-			|| name == "élémentaire hydatos" || name == "élémentaire pyros" || name == "élémentaire pagos" || name == "élémentaire anemos"
-			|| name == "hydatos-elementar" || name == "pyros-elementar" || name == "pagos-elementar" || name == "anemos-elementar"
-			;
+		return name == "hydatos elemental"
+			|| name == "pyros elemental"
+			|| name == "pagos elemental"
+			|| name == "anemos elemental"
+			|| name == "ヒュダトス・エレメンタル"
+			|| name == "パゴス・エレメンタル"
+			|| name == "ピューロス・エレメンタル"
+			|| name == "アネモス・エレメンタル"
+			|| name == "élémentaire hydatos"
+			|| name == "élémentaire pyros"
+			|| name == "élémentaire pagos"
+			|| name == "élémentaire anemos"
+			|| name == "hydatos-elementar"
+			|| name == "pyros-elementar"
+			|| name == "pagos-elementar"
+			|| name == "anemos-elementar";
 	}
 }

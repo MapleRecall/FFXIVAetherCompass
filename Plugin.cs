@@ -70,9 +70,11 @@ public class Plugin : IDalamudPlugin
 			_enabled = false;
 			Overlay.Clear();
 			DetailsWindow.Clear();
-			if (!value) IconManager.DisposeAllIcons();
+			if (!value)
+				IconManager.DisposeAllIcons();
 			_enabled = value;
-			if (Config != null) Config.Enabled = value;
+			if (Config != null)
+				Config.Enabled = value;
 		}
 	}
 
@@ -92,7 +94,7 @@ public class Plugin : IDalamudPlugin
 		ClientState.TerritoryChanged += OnZoneChange;
 
 		Reload();
-		OnZoneChange(ClientState.TerritoryType);  // update zone related stuff on init
+		OnZoneChange(ClientState.TerritoryType); // update zone related stuff on init
 	}
 
 	public static void ShowError(string chatMsg, string logMsg)
@@ -104,14 +106,17 @@ public class Plugin : IDalamudPlugin
 	public static void OpenConfig(bool setFocus = false)
 	{
 		InConfig = true;
-		if (setFocus) ConfigUi.IsFocus = true;
+		if (setFocus)
+			ConfigUi.IsFocus = true;
 	}
 
 	private void OnDrawUi()
 	{
-		if (ClientState.LocalContentId == 0) return;
+		if (ClientState.LocalContentId == 0)
+			return;
 
-		if (InConfig) ConfigUi.Draw();
+		if (InConfig)
+			ConfigUi.Draw();
 
 		if (Enabled && ZoneWatcher.IsInCompassWorkZone && !InNotDrawingConditions())
 		{
@@ -119,12 +124,14 @@ public class Plugin : IDalamudPlugin
 			{
 				try
 				{
-					if (Config.ShowScreenMark) Overlay.Draw();
+					if (Config.ShowScreenMark)
+						Overlay.Draw();
 					if (Config.ShowDetailWindow)
 					{
 						if (!(Config.HideDetailInContents && ZoneWatcher.IsInDetailWindowHideZone))
 							DetailsWindow.Draw();
-						else DetailsWindow.Clear();
+						else
+							DetailsWindow.Clear();
 					}
 				}
 				catch (Exception e)
@@ -137,8 +144,10 @@ public class Plugin : IDalamudPlugin
 			{
 				// Clear when should not draw to avoid any action remaining in queue be drawn later
 				// which would cause game crash due to access violation etc.
-				if (Config.ShowScreenMark) Overlay.Clear();
-				if (Config.ShowDetailWindow) DetailsWindow.Clear();
+				if (Config.ShowScreenMark)
+					Overlay.Clear();
+				if (Config.ShowDetailWindow)
+					DetailsWindow.Clear();
 			}
 		}
 		else if (InConfig && Config.ShowScreenMark)
@@ -157,7 +166,7 @@ public class Plugin : IDalamudPlugin
 	internal static void SetEnabledIfConfigChanged()
 	{
 		if (Config.Enabled != _enabled)
-			Enabled = Config.Enabled;   // Clear&Reload iff Enabled changed
+			Enabled = Config.Enabled; // Clear&Reload iff Enabled changed
 	}
 
 	private void OnFrameworkUpdate(IFramework framework)
@@ -181,40 +190,45 @@ public class Plugin : IDalamudPlugin
 	private void OnZoneChange(ushort terr)
 	{
 		ZoneWatcher.OnZoneChange();
-		if (terr == 0) return;
+		if (terr == 0)
+			return;
 		// Local player is almost always null when this event fired
 		if (Enabled && ClientState.LocalContentId != 0)
 			CompassManager.OnZoneChange();
 	}
 
-	private static bool InNotDrawingConditions()
-		=> Config.HideInEvent &&
-		(ClientCondition[ConditionFlag.ChocoboRacing]
-		|| ClientCondition[ConditionFlag.CreatingCharacter]
-		|| ClientCondition[ConditionFlag.DutyRecorderPlayback]
-		|| ClientCondition[ConditionFlag.OccupiedInCutSceneEvent]
-		|| ClientCondition[ConditionFlag.OccupiedInEvent]
-		|| ClientCondition[ConditionFlag.OccupiedInQuestEvent]
-		|| ClientCondition[ConditionFlag.OccupiedSummoningBell]
-		|| ClientCondition[ConditionFlag.Performing]
-		|| ClientCondition[ConditionFlag.PlayingLordOfVerminion]
-		|| ClientCondition[ConditionFlag.PlayingMiniGame]
-		|| ClientCondition[ConditionFlag.WatchingCutscene]
-		|| ClientCondition[ConditionFlag.WatchingCutscene78]
-		) || Config.HideWhenCraftGather &&
-		(ClientCondition[ConditionFlag.Crafting]
-		|| ClientCondition[ConditionFlag.Crafting40]
-		|| ClientCondition[ConditionFlag.Fishing]
-		|| ClientCondition[ConditionFlag.Gathering]
-		|| ClientCondition[ConditionFlag.Gathering42]
-		|| ClientCondition[ConditionFlag.PreparingToCraft]
-		);
+	private static bool InNotDrawingConditions() =>
+		Config.HideInEvent
+			&& (
+				ClientCondition[ConditionFlag.ChocoboRacing]
+				|| ClientCondition[ConditionFlag.CreatingCharacter]
+				|| ClientCondition[ConditionFlag.DutyRecorderPlayback]
+				|| ClientCondition[ConditionFlag.OccupiedInCutSceneEvent]
+				|| ClientCondition[ConditionFlag.OccupiedInEvent]
+				|| ClientCondition[ConditionFlag.OccupiedInQuestEvent]
+				|| ClientCondition[ConditionFlag.OccupiedSummoningBell]
+				|| ClientCondition[ConditionFlag.Performing]
+				|| ClientCondition[ConditionFlag.PlayingLordOfVerminion]
+				|| ClientCondition[ConditionFlag.PlayingMiniGame]
+				|| ClientCondition[ConditionFlag.WatchingCutscene]
+				|| ClientCondition[ConditionFlag.WatchingCutscene78]
+			)
+		|| Config.HideWhenCraftGather
+			&& (
+				ClientCondition[ConditionFlag.Crafting]
+				|| ClientCondition[ConditionFlag.Crafting40]
+				|| ClientCondition[ConditionFlag.Fishing]
+				|| ClientCondition[ConditionFlag.Gathering]
+				|| ClientCondition[ConditionFlag.Gathering42]
+				|| ClientCondition[ConditionFlag.PreparingToCraft]
+			);
 
 	#region IDisposable Support
 
 	protected virtual void Dispose(bool disposing)
 	{
-		if (!disposing) return;
+		if (!disposing)
+			return;
 
 		//config.Save();
 

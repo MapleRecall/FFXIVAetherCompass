@@ -1,7 +1,7 @@
+using System.Numerics;
 using Dalamud.Game.Text;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
-using System.Numerics;
 
 namespace AetherCompass.UI;
 
@@ -15,10 +15,7 @@ public static class Chat
 	public static void PrintChat(SeString msg)
 	{
 		msg.Payloads.Insert(0, new TextPayload("[AetherCompass] "));
-		Plugin.ChatGui.Print(new XivChatEntry()
-		{
-			Message = msg,
-		});
+		Plugin.ChatGui.Print(new() { Message = msg });
 	}
 
 	public static void PrintErrorChat(string msg)
@@ -31,12 +28,13 @@ public static class Chat
 		var nameString = $"{fixedMapPayload.PlaceName} {fixedMapPayload.CoordinateString}";
 
 		var payloads = new List<Payload>(
-		[
-			fixedMapPayload,
-                // arrow goes here
-                new TextPayload(nameString),
-			RawPayload.LinkTerminator,
-		]);
+			[
+				fixedMapPayload,
+				// arrow goes here
+				new TextPayload(nameString),
+				RawPayload.LinkTerminator,
+			]
+		);
 		payloads.InsertRange(1, SeString.TextArrowPayloads);
 
 		return new(payloads);
@@ -62,6 +60,6 @@ public static class Chat
 		return s;
 	}
 
-	public static SeString AppendText(this SeString s, string text)
-		=> s.Append(new TextPayload(text));
+	public static SeString AppendText(this SeString s, string text) =>
+		s.Append(new TextPayload(text));
 }

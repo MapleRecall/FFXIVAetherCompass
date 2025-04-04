@@ -16,8 +16,7 @@ public sealed unsafe class CompassManager
 	private readonly HashSet<Compass> debugCompasses = [];
 #endif
 
-	private readonly SortedSet<Compass> allAddedCompasses
-		= new(new CompassSortComp());
+	private readonly SortedSet<Compass> allAddedCompasses = new(new CompassSortComp());
 
 	private readonly List<Compass> workingCompasses = [];
 
@@ -31,7 +30,8 @@ public sealed unsafe class CompassManager
 			if (t.IsSubclassOf(typeof(Compass)) && !t.IsAbstract)
 			{
 				var ctor = t.GetConstructor(Type.EmptyTypes);
-				if (ctor != null) AddCompass((Compass)ctor.Invoke(null));
+				if (ctor != null)
+					AddCompass((Compass)ctor.Invoke(null));
 			}
 		}
 	}
@@ -88,8 +88,10 @@ public sealed unsafe class CompassManager
 				debugCompasses.Remove(c);
 				break;
 #endif
-			default: break;
-		};
+			default:
+				break;
+		}
+
 		allAddedCompasses.Remove(c);
 	}
 
@@ -107,22 +109,24 @@ public sealed unsafe class CompassManager
 		if (workingCompasses.Count > 0)
 		{
 			foreach (var compass in workingCompasses)
-				if (compass.CompassEnabled) compass.CancelLastUpdate();
+				if (compass.CompassEnabled)
+					compass.CancelLastUpdate();
 
 #if DEBUG
 			var debugTestAll = Plugin.Config.DebugTestAllGameObjects;
 			void* array = debugTestAll
 				? GameObjects.ObjectListFiltered
 				: GameObjects.SortedObjectInfoPointerArray;
-			int count = debugTestAll
+			var count = debugTestAll
 				? GameObjects.ObjectListFilteredCount
 				: GameObjects.SortedObjectInfoCount;
 #else
-                var array = GameObjects.SortedObjectInfoPointerArray;
-                var count = GameObjects.SortedObjectInfoCount;
+			var array = GameObjects.SortedObjectInfoPointerArray;
+			var count = GameObjects.SortedObjectInfoCount;
 #endif
 
-			if (array == null) return;
+			if (array == null)
+				return;
 
 			foreach (var compass in workingCompasses)
 			{
@@ -143,7 +147,8 @@ public sealed unsafe class CompassManager
 
 	private void ProcessFlagOnTickEnd()
 	{
-		if (!hasMapFlagToProcess) return;
+		if (!hasMapFlagToProcess)
+			return;
 
 		// NOTE: Dirty fix
 		// Currently Dalamud's MapLinkPayload internally does not take into account Map's X/Y-offset,
@@ -156,8 +161,15 @@ public sealed unsafe class CompassManager
 		var map = ZoneWatcher.CurrentMap;
 		if (map != null)
 		{
-			var fixedMapLink = FixedMapLinkPayload.FromMapCoord(terrId, ZoneWatcher.CurrentMapId,
-				mapFlagCoord.X, mapFlagCoord.Y, map.Value.SizeFactor, map.Value.OffsetX, map.Value.OffsetY);
+			var fixedMapLink = FixedMapLinkPayload.FromMapCoord(
+				terrId,
+				ZoneWatcher.CurrentMapId,
+				mapFlagCoord.X,
+				mapFlagCoord.Y,
+				map.Value.SizeFactor,
+				map.Value.OffsetX,
+				map.Value.OffsetY
+			);
 #if DEBUG
 			LogDebug($"Create MapLinkPayload from {mapFlagCoord}: {fixedMapLink}");
 #endif
@@ -205,12 +217,14 @@ public sealed unsafe class CompassManager
 	{
 		public int Compare(Compass? x, Compass? y)
 		{
-			if (x == null && y == null) return 0;
-			if (x == null) return int.MinValue;
-			if (y == null) return int.MaxValue;
+			if (x == null && y == null)
+				return 0;
+			if (x == null)
+				return int.MinValue;
+			if (y == null)
+				return int.MaxValue;
 			var ret = x.CompassType.CompareTo(y.CompassType);
-			return ret != 0 ? ret
-				: x.GetType().Name.CompareTo(y.GetType().Name);
+			return ret != 0 ? ret : x.GetType().Name.CompareTo(y.GetType().Name);
 		}
 	}
 }

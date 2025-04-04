@@ -1,3 +1,6 @@
+using System.Numerics;
+using System.Threading;
+using System.Threading.Tasks;
 using AetherCompass.Common;
 using AetherCompass.Common.Attributes;
 using AetherCompass.Compasses.Objectives;
@@ -7,9 +10,6 @@ using AetherCompass.UI.Gui;
 using Dalamud.Interface.Textures;
 using FFXIVClientStructs.FFXIV.Client.Game.Object;
 using ImGuiNET;
-using System.Numerics;
-using System.Threading;
-using System.Threading.Tasks;
 using ObjectInfo = FFXIVClientStructs.FFXIV.Client.UI.UI3DModule.ObjectInfo;
 
 namespace AetherCompass.Compasses;
@@ -36,9 +36,11 @@ public abstract class Compass
 		get
 		{
 			if (_compassType == CompassType.Unknown)
-				_compassType
-					= (GetType().GetCustomAttributes(typeof(CompassTypeAttribute), false)[0]
-						as CompassTypeAttribute)?.Type ?? CompassType.Invalid;
+				_compassType =
+					(
+						GetType().GetCustomAttributes(typeof(CompassTypeAttribute), false)[0]
+						as CompassTypeAttribute
+					)?.Type ?? CompassType.Invalid;
 			return _compassType;
 		}
 	}
@@ -50,7 +52,8 @@ public abstract class Compass
 		get => _compassEnabled;
 		set
 		{
-			if (!value) DisposeCompassUsedIcons();
+			if (!value)
+				DisposeCompassUsedIcons();
 			_compassEnabled = value;
 		}
 	}
@@ -64,7 +67,7 @@ public abstract class Compass
 
 	public Compass()
 	{
-		_compassEnabled = CompassConfig.Enabled;   // assign to field to avoid trigger Icon manager when init
+		_compassEnabled = CompassConfig.Enabled; // assign to field to avoid trigger Icon manager when init
 		ready = true;
 	}
 
@@ -79,26 +82,26 @@ public abstract class Compass
 
 	public abstract unsafe bool IsObjective(GameObject* o);
 
-	protected virtual unsafe CachedCompassObjective CreateCompassObjective(GameObject* obj)
-		=> new(obj);
+	protected virtual unsafe CachedCompassObjective CreateCompassObjective(GameObject* obj) =>
+		new(obj);
 
-	protected virtual unsafe CachedCompassObjective CreateCompassObjective(ObjectInfo* info)
-		=> new(info);
+	protected virtual unsafe CachedCompassObjective CreateCompassObjective(ObjectInfo* info) =>
+		new(info);
 
-	protected abstract unsafe string
-		GetClosestObjectiveDescription(CachedCompassObjective objective);
+	protected abstract string GetClosestObjectiveDescription(CachedCompassObjective objective);
 
-	public abstract unsafe DrawAction? CreateDrawDetailsAction(CachedCompassObjective objective);
+	public abstract DrawAction? CreateDrawDetailsAction(CachedCompassObjective objective);
 
-	public abstract unsafe DrawAction? CreateMarkScreenAction(CachedCompassObjective objective);
+	public abstract DrawAction? CreateMarkScreenAction(CachedCompassObjective objective);
 
 	#endregion To be overriden by children
 
 	#region Object processing related - Optionally overriden by children
 
-	public virtual unsafe void UpdateClosestObjective(CachedCompassObjective objective)
+	public virtual void UpdateClosestObjective(CachedCompassObjective objective)
 	{
-		if (closestObj == null) closestObj = objective;
+		if (closestObj == null)
+			closestObj = objective;
 		else if (objective.Distance3D < closestObj.Distance3D)
 			closestObj = objective;
 	}
@@ -136,33 +139,45 @@ public abstract class Compass
 	{
 		cts = new();
 		var token = cts.Token;
-		Task.Run(() =>
-		{
-			ProcessOnLoopStart();
-			for (int i = 0; i < count; i++)
-			{
-				if (token.IsCancellationRequested) token.ThrowIfCancellationRequested();
-				var info = infoArray[i];
-				var obj = info != null ? info->GameObject : null;
-				if (obj == null || obj->ObjectKind == ObjectKind.Pc) continue;
-				if (!IsObjective(obj)) continue;
-				var objective = CreateCompassObjective(info);
-				ProcessObjectiveInLoop(objective);
-			}
-			if (token.IsCancellationRequested) token.ThrowIfCancellationRequested();
-			ProcessOnLoopEnd();
-		}, token).ContinueWith(t =>
-		{
-			if (t.IsFaulted)
-			{
-				foreach (var e in t.Exception!.InnerExceptions)
+		Task.Run(
+				() =>
 				{
-					if (e is ObjectDisposedException) continue;
-					LogError(e.ToString());
-				}
-			}
-			ResetCancellation();
-		}, CancellationToken.None);
+					ProcessOnLoopStart();
+					for (var i = 0; i < count; i++)
+					{
+						if (token.IsCancellationRequested)
+							token.ThrowIfCancellationRequested();
+						var info = infoArray[i];
+						var obj = info != null ? info->GameObject : null;
+						if (obj == null || obj->ObjectKind == ObjectKind.Pc)
+							continue;
+						if (!IsObjective(obj))
+							continue;
+						var objective = CreateCompassObjective(info);
+						ProcessObjectiveInLoop(objective);
+					}
+					if (token.IsCancellationRequested)
+						token.ThrowIfCancellationRequested();
+					ProcessOnLoopEnd();
+				},
+				token
+			)
+			.ContinueWith(
+				t =>
+				{
+					if (t.IsFaulted)
+					{
+						foreach (var e in t.Exception!.InnerExceptions)
+						{
+							if (e is ObjectDisposedException)
+								continue;
+							LogError(e.ToString());
+						}
+					}
+					ResetCancellation();
+				},
+				CancellationToken.None
+			);
 	}
 
 #if DEBUG
@@ -171,35 +186,46 @@ public abstract class Compass
 	{
 		cts = new();
 		var token = cts.Token;
-		Task.Run(() =>
-		{
-			ProcessOnLoopStart();
-			for (int i = 0; i < count; i++)
-			{
-				if (token.IsCancellationRequested) token.ThrowIfCancellationRequested();
-				var obj = GameObjectList[i];
-				if (obj == null) continue;
-				if (!IsObjective(obj)) continue;
-				// no info about nameplate pos here though
-				var objective = CreateCompassObjective(obj);
-				ProcessObjectiveInLoop(objective);
-			}
-			if (token.IsCancellationRequested) token.ThrowIfCancellationRequested();
-			ProcessOnLoopEnd();
-		}, token).ContinueWith(t =>
-		{
-			if (t.IsFaulted)
-			{
-				foreach (var e in t.Exception!.InnerExceptions)
+		Task.Run(
+				() =>
 				{
-					if (e is ObjectDisposedException) continue;
-					LogError(e.ToString());
-				}
-			}
-			ResetCancellation();
-		}, CancellationToken.None);
+					ProcessOnLoopStart();
+					for (var i = 0; i < count; i++)
+					{
+						if (token.IsCancellationRequested)
+							token.ThrowIfCancellationRequested();
+						var obj = GameObjectList[i];
+						if (obj == null)
+							continue;
+						if (!IsObjective(obj))
+							continue;
+						// no info about nameplate pos here though
+						var objective = CreateCompassObjective(obj);
+						ProcessObjectiveInLoop(objective);
+					}
+					if (token.IsCancellationRequested)
+						token.ThrowIfCancellationRequested();
+					ProcessOnLoopEnd();
+				},
+				token
+			)
+			.ContinueWith(
+				t =>
+				{
+					if (t.IsFaulted)
+					{
+						foreach (var e in t.Exception!.InnerExceptions)
+						{
+							if (e is ObjectDisposedException)
+								continue;
+							LogError(e.ToString());
+						}
+					}
+					ResetCancellation();
+				},
+				CancellationToken.None
+			);
 	}
-
 #endif
 
 	private void ProcessObjectiveInLoop(CachedCompassObjective objective)
@@ -215,10 +241,12 @@ public abstract class Compass
 		{
 			if (
 #if DEBUG
-				Plugin.Config.DebugTestAllGameObjects ||
+				Plugin.Config.DebugTestAllGameObjects
+				||
 #endif
 				!Plugin.Config.HideScreenMarkIfNameplateInsideDisplayArea
-				|| !ShouldHideMarkerFor(objective))
+				|| !ShouldHideMarkerFor(objective)
+			)
 			{
 				var action = CreateMarkScreenAction(objective);
 				Plugin.Overlay.AddDrawAction(action);
@@ -226,36 +254,47 @@ public abstract class Compass
 		}
 	}
 
-	private unsafe void ProcessClosestObj()
+	private void ProcessClosestObj()
 	{
 		if (ready)
 		{
-			if ((DateTime.UtcNow - closestObjLastChangedTime).TotalSeconds > closestObjResetDelayInSec)
+			if (
+				(DateTime.UtcNow - closestObjLastChangedTime).TotalSeconds
+				> closestObjResetDelayInSec
+			)
 			{
 				closestObjPtrSecondLast = IntPtr.Zero;
 				closestObjLastChangedTime = DateTime.UtcNow;
 			}
-			else if (closestObj != null && !closestObj.IsEmpty()
+			else if (
+				closestObj != null
+				&& !closestObj.IsEmpty()
 				&& !closestObj.IsCacheFor(closestObjPtrLast)
-				&& !closestObj.IsCacheFor(closestObjPtrSecondLast))
+				&& !closestObj.IsCacheFor(closestObjPtrSecondLast)
+			)
 			{
 				if (NotifyChat)
 				{
 					var msg = Chat.CreateMapLink(
-						Plugin.ClientState.TerritoryType, ZoneWatcher.CurrentMapId,
-						closestObj.CurrentMapCoord, CompassUtil.CurrentHasZCoord());
+						Plugin.ClientState.TerritoryType,
+						ZoneWatcher.CurrentMapId,
+						closestObj.CurrentMapCoord,
+						CompassUtil.CurrentHasZCoord()
+					);
 					msg.PrependText($"Found {GetClosestObjectiveDescription(closestObj)} at ");
-					msg.AppendText($", on {closestObj.CompassDirectionFromPlayer}, " +
-						$"{CompassUtil.DistanceToDescriptiveString(closestObj.Distance3D, false)} from you");
+					msg.AppendText(
+						$", on {closestObj.CompassDirectionFromPlayer}, "
+							+ $"{CompassUtil.DistanceToDescriptiveString(closestObj.Distance3D, false)} from you"
+					);
 					Notifier.TryNotifyByChat(msg, NotifySe, CompassConfig.NotifySeId);
 				}
 				if (NotifyToast)
 				{
 					var msg =
-						$"Found {GetClosestObjectiveDescription(closestObj)} " +
-						$"on {closestObj.CompassDirectionFromPlayer}, " +
-						$"{CompassUtil.DistanceToDescriptiveString(closestObj.Distance3D, true)} from you, " +
-						$"at {CompassUtil.MapCoordToFormattedString(closestObj.CurrentMapCoord)}";
+						$"Found {GetClosestObjectiveDescription(closestObj)} "
+						+ $"on {closestObj.CompassDirectionFromPlayer}, "
+						+ $"{CompassUtil.DistanceToDescriptiveString(closestObj.Distance3D, true)} from you, "
+						+ $"at {CompassUtil.MapCoordToFormattedString(closestObj.CurrentMapCoord)}";
 					Notifier.TryNotifyByToast(msg);
 				}
 				closestObjPtrSecondLast = closestObjPtrLast;
@@ -266,8 +305,7 @@ public abstract class Compass
 		closestObj = null;
 	}
 
-	public void CancelLastUpdate()
-		=> cts?.Cancel();
+	public void CancelLastUpdate() => cts?.Cancel();
 
 	private void ResetCancellation()
 	{
@@ -282,15 +320,19 @@ public abstract class Compass
 	public void DrawConfigUi()
 	{
 		var name = CompassType is CompassType.Experimental or CompassType.Debug
-			? $"[{CompassType}] ".ToUpper() + CompassName : CompassName;
+			? $"[{CompassType}] ".ToUpper() + CompassName
+			: CompassName;
 		ImGuiEx.Checkbox(name, ref CompassConfig.Enabled);
 		// Also dispose icons if disabled
-		if (CompassConfig.Enabled != _compassEnabled) CompassEnabled = CompassConfig.Enabled;
+		if (CompassConfig.Enabled != _compassEnabled)
+			CompassEnabled = CompassConfig.Enabled;
 		ImGui.Indent();
 		ImGuiEx.IconTextCompass(nextSameLine: true);
 		ImGui.TextWrapped(Description);
 		if (CompassType == CompassType.Experimental)
-			ImGui.TextDisabled("Experimental compasses may not work as expected.\nPlease enable with caution.");
+			ImGui.TextDisabled(
+				"Experimental compasses may not work as expected.\nPlease enable with caution."
+			);
 		ImGui.Unindent();
 		if (CompassConfig.Enabled)
 		{
@@ -300,46 +342,72 @@ public abstract class Compass
 				ImGui.BulletText("UI:");
 				ImGui.Indent();
 				if (Plugin.Config.ShowScreenMark)
-					ImGuiEx.Checkbox("Mark detected objects on screen", ref CompassConfig.MarkScreen,
-						"Mark objects detected by this compass on screen, showing the direction and distance.");
-				else ImGui.TextDisabled("Mark-on-screen disabled in Plugin Settings");
+					ImGuiEx.Checkbox(
+						"Mark detected objects on screen",
+						ref CompassConfig.MarkScreen,
+						"Mark objects detected by this compass on screen, showing the direction and distance."
+					);
+				else
+					ImGui.TextDisabled("Mark-on-screen disabled in Plugin Settings");
 				if (Plugin.Config.ShowDetailWindow)
-					ImGuiEx.Checkbox("Show objects details", ref CompassConfig.ShowDetail,
-						"List details of objects detected by this compass in the Details Window.");
-				else ImGui.TextDisabled("Detail Window disabled in Plugin Settings");
+					ImGuiEx.Checkbox(
+						"Show objects details",
+						ref CompassConfig.ShowDetail,
+						"List details of objects detected by this compass in the Details Window."
+					);
+				else
+					ImGui.TextDisabled("Detail Window disabled in Plugin Settings");
 				ImGui.Unindent();
 
 				ImGui.BulletText("Notifications:");
 				ImGui.Indent();
 				if (Plugin.Config.NotifyChat)
 				{
-					ImGuiEx.Checkbox("Chat", ref CompassConfig.NotifyChat,
-						"Allow this compass to send a chat message about an object detected.");
+					ImGuiEx.Checkbox(
+						"Chat",
+						ref CompassConfig.NotifyChat,
+						"Allow this compass to send a chat message about an object detected."
+					);
 					if (Plugin.Config.NotifySe)
 					{
-						ImGuiEx.Checkbox("Sound", ref CompassConfig.NotifySe,
-							"Also allow this compass to make sound when sending chat message notification.");
+						ImGuiEx.Checkbox(
+							"Sound",
+							ref CompassConfig.NotifySe,
+							"Also allow this compass to make sound when sending chat message notification."
+						);
 						if (CompassConfig.NotifySe)
 						{
 							ImGui.Indent();
-							ImGuiEx.InputInt("Sound Effect ID", 100, ref CompassConfig.NotifySeId,
-								"Input the Sound Effect ID for sound notification, from 1 to 16.\n\n" +
-								"Sound Effect ID is the same as the game's macro sound effects <se.1>~<se.16>. " +
-								"For example, if <se.1> is to be used, then enter \"1\" here.");
-							if (CompassConfig.NotifySeId < 1) CompassConfig.NotifySeId = 1;
-							if (CompassConfig.NotifySeId > 16) CompassConfig.NotifySeId = 16;
+							ImGuiEx.InputInt(
+								"Sound Effect ID",
+								100,
+								ref CompassConfig.NotifySeId,
+								"Input the Sound Effect ID for sound notification, from 1 to 16.\n\n"
+									+ "Sound Effect ID is the same as the game's macro sound effects <se.1>~<se.16>. "
+									+ "For example, if <se.1> is to be used, then enter \"1\" here."
+							);
+							if (CompassConfig.NotifySeId < 1)
+								CompassConfig.NotifySeId = 1;
+							if (CompassConfig.NotifySeId > 16)
+								CompassConfig.NotifySeId = 16;
 							ImGui.Unindent();
 						}
 					}
-					else ImGui.TextDisabled("Sound notification disabled in Plugin Settings");
+					else
+						ImGui.TextDisabled("Sound notification disabled in Plugin Settings");
 				}
-				else ImGui.TextDisabled("Chat notification disabled in Plugin Settings");
+				else
+					ImGui.TextDisabled("Chat notification disabled in Plugin Settings");
 				if (Plugin.Config.NotifyToast)
 				{
-					ImGuiEx.Checkbox("Toast", ref CompassConfig.NotifyToast,
-						"Allow this compass to make a Toast notification about an object detected.");
+					ImGuiEx.Checkbox(
+						"Toast",
+						ref CompassConfig.NotifyToast,
+						"Allow this compass to make a Toast notification about an object detected."
+					);
 				}
-				else ImGui.TextDisabled("Toast notification disabled in Plugin Settings");
+				else
+					ImGui.TextDisabled("Toast notification disabled in Plugin Settings");
 				ImGui.Unindent();
 
 				DrawConfigUiExtra();
@@ -349,8 +417,7 @@ public abstract class Compass
 		}
 	}
 
-	public virtual void DrawConfigUiExtra()
-	{ }
+	public virtual void DrawConfigUiExtra() { }
 
 	#endregion Config UI
 
@@ -362,122 +429,263 @@ public abstract class Compass
 			Plugin.CompassManager.RegisterMapFlag(new(mapCoordToFlag.X, mapCoordToFlag.Y));
 	}
 
-	internal static DrawAction? GenerateConfigDummyMarkerDrawAction(string info, float markerSizeScale, float textRelSizeScale)
+	internal static DrawAction? GenerateConfigDummyMarkerDrawAction(
+		string info,
+		float markerSizeScale,
+		float textRelSizeScale
+	)
 	{
 		var icon = Plugin.IconManager.ConfigDummyMarkerIcon;
-		if (icon == null) info = "(Failed to load icon)\n" + info;
+		if (icon == null)
+			info = "(Failed to load icon)\n" + info;
 		var drawPos = UiHelper.GetScreenCentre();
-		return DrawAction.Combine(important: true,
-			GenerateScreenMarkerIconDrawAction(icon, drawPos, IconManager.MarkerIconSize, markerSizeScale, 1, out drawPos),
-			GenerateExtraInfoDrawAction(info, markerSizeScale, textRelSizeScale,
-				new(1, 1, 1, 1), 0, drawPos, IconManager.MarkerIconSize, 0, out _));
+		return DrawAction.Combine(
+			important: true,
+			GenerateScreenMarkerIconDrawAction(
+				icon,
+				drawPos,
+				IconManager.MarkerIconSize,
+				markerSizeScale,
+				1,
+				out drawPos
+			),
+			GenerateExtraInfoDrawAction(
+				info,
+				markerSizeScale,
+				textRelSizeScale,
+				new(1, 1, 1, 1),
+				0,
+				drawPos,
+				IconManager.MarkerIconSize,
+				0,
+				out _
+			)
+		);
 	}
 
-	protected static Vector2 DefaultMarkerIconSize
-		=> IconManager.MarkerIconSize;
+	protected static Vector2 DefaultMarkerIconSize => IconManager.MarkerIconSize;
 
-	private static readonly Vector2 BaseMarkerSize
-		= DefaultMarkerIconSize + IconManager.DirectionScreenIndicatorIconSize;
+	private static readonly Vector2 BaseMarkerSize =
+		DefaultMarkerIconSize + IconManager.DirectionScreenIndicatorIconSize;
 
-	protected static DrawAction? GenerateDefaultScreenMarkerDrawAction(CachedCompassObjective obj,
-		uint iconId, Vector2 iconSizeRaw, float iconAlpha, string info,
-		Vector4 infoTextColour, float textShadowLightness, out Vector2 lastDrawEndPos,
-		bool important = false, bool showIfOutOfScreen = true)
+	protected static DrawAction? GenerateDefaultScreenMarkerDrawAction(
+		CachedCompassObjective obj,
+		uint iconId,
+		Vector2 iconSizeRaw,
+		float iconAlpha,
+		string info,
+		Vector4 infoTextColour,
+		float textShadowLightness,
+		out Vector2 lastDrawEndPos,
+		bool important = false,
+		bool showIfOutOfScreen = true
+	)
 	{
-		Vector3 hitboxPosAdjusted = new(obj.Position.X, obj.Position.Y + obj.GameObjectHeight + .5f, obj.Position.Z);
-		bool inFrontOfCamera = UiHelper.WorldToScreenPos(hitboxPosAdjusted, out var screenPos);
+		Vector3 hitboxPosAdjusted = new(
+			obj.Position.X,
+			obj.Position.Y + obj.GameObjectHeight + .5f,
+			obj.Position.Z
+		);
+		var inFrontOfCamera = UiHelper.WorldToScreenPos(hitboxPosAdjusted, out var screenPos);
 		if (!showIfOutOfScreen)
 		{
 			// Allow some extra space;
 			// Also exclude those having screen position calculated to be
 			// inside viewport but actually are at the back
-			if (!UiHelper.IsScreenPosInsideMainViewport(screenPos, new(-20, 50, 20, -20))
-				|| !inFrontOfCamera && UiHelper.IsScreenPosInsideMainViewport(screenPos))
+			if (
+				!UiHelper.IsScreenPosInsideMainViewport(screenPos, new(-20, 50, 20, -20))
+				|| !inFrontOfCamera && UiHelper.IsScreenPosInsideMainViewport(screenPos)
+			)
 			{
 				lastDrawEndPos = new();
 				return null;
 			}
 		}
 		screenPos = PushToSideOnXIfNeeded(screenPos, inFrontOfCamera);
-		float flippedOnScreenRotation = UiHelper.GetAngleOnScreen(screenPos, true);
+		var flippedOnScreenRotation = UiHelper.GetAngleOnScreen(screenPos, true);
 
 		var scaledBaseMarkerSize = BaseMarkerSize * Plugin.Config.ScreenMarkSizeScale;
 
-		lastDrawEndPos = UiHelper.GetConstrainedScreenPos(screenPos, Plugin.Config.ScreenMarkConstraint, scaledBaseMarkerSize / 4);
+		lastDrawEndPos = UiHelper.GetConstrainedScreenPos(
+			screenPos,
+			Plugin.Config.ScreenMarkConstraint,
+			scaledBaseMarkerSize / 4
+		);
 
 		// Direction indicator
-		var directionIconDrawAction = GenerateDirectionIconDrawAction(lastDrawEndPos,
-			flippedOnScreenRotation, Plugin.Config.ScreenMarkSizeScale,
-			IconManager.DirectionScreenIndicatorIconColour, out lastDrawEndPos);
+		var directionIconDrawAction = GenerateDirectionIconDrawAction(
+			lastDrawEndPos,
+			flippedOnScreenRotation,
+			Plugin.Config.ScreenMarkSizeScale,
+			IconManager.DirectionScreenIndicatorIconColour,
+			out lastDrawEndPos
+		);
 		// Marker
 		var icon = Plugin.IconManager.GetIcon(iconId);
-		var markerIconDrawAction = GenerateScreenMarkerIconDrawAction(icon, lastDrawEndPos,
-			iconSizeRaw, Plugin.Config.ScreenMarkSizeScale, iconAlpha, out lastDrawEndPos);
+		var markerIconDrawAction = GenerateScreenMarkerIconDrawAction(
+			icon,
+			lastDrawEndPos,
+			iconSizeRaw,
+			Plugin.Config.ScreenMarkSizeScale,
+			iconAlpha,
+			out lastDrawEndPos
+		);
 		// Altitude diff
-		var altDiffIconDrawAction = markerIconDrawAction == null ? null
-			: GenerateAltitudeDiffIconDrawAction(obj.AltitudeDiff, lastDrawEndPos,
-				Plugin.Config.ScreenMarkSizeScale, iconAlpha, out _);
+		var altDiffIconDrawAction =
+			markerIconDrawAction == null
+				? null
+				: GenerateAltitudeDiffIconDrawAction(
+					obj.AltitudeDiff,
+					lastDrawEndPos,
+					Plugin.Config.ScreenMarkSizeScale,
+					iconAlpha,
+					out _
+				);
 		// Extra info
-		var extraInfoDrawAction = GenerateExtraInfoDrawAction(info,
-			Plugin.Config.ScreenMarkSizeScale, Plugin.Config.ScreenMarkTextRelSizeScale,
-			infoTextColour, textShadowLightness, lastDrawEndPos, iconSizeRaw, flippedOnScreenRotation, out _);
-		return DrawAction.Combine(important, directionIconDrawAction, markerIconDrawAction, altDiffIconDrawAction, extraInfoDrawAction);
+		var extraInfoDrawAction = GenerateExtraInfoDrawAction(
+			info,
+			Plugin.Config.ScreenMarkSizeScale,
+			Plugin.Config.ScreenMarkTextRelSizeScale,
+			infoTextColour,
+			textShadowLightness,
+			lastDrawEndPos,
+			iconSizeRaw,
+			flippedOnScreenRotation,
+			out _
+		);
+		return DrawAction.Combine(
+			important,
+			directionIconDrawAction,
+			markerIconDrawAction,
+			altDiffIconDrawAction,
+			extraInfoDrawAction
+		);
 	}
 
-	protected static DrawAction? GenerateDirectionIconDrawAction(Vector2 drawPos,
-		float rotation, float scale, uint colour, out Vector2 drawEndPos)
+	protected static DrawAction? GenerateDirectionIconDrawAction(
+		Vector2 drawPos,
+		float rotation,
+		float scale,
+		uint colour,
+		out Vector2 drawEndPos
+	)
 	{
 		var icon = Plugin.IconManager.DirectionScreenIndicatorIcon;
 		var iconHalfSize = IconManager.DirectionScreenIndicatorIconSize * scale / 2;
 		(var p1, var p2, var p3, var p4) = UiHelper.GetRotatedRectPointsOnScreen(
-			drawPos, iconHalfSize, rotation);
+			drawPos,
+			iconHalfSize,
+			rotation
+		);
 		//var iconCentre = (p1 + p3) / 2;
-		drawEndPos = new Vector2(drawPos.X + iconHalfSize.X * MathF.Sin(rotation),
-			drawPos.Y + iconHalfSize.Y * MathF.Cos(rotation));
-		return icon == null ? null
-			: new(() => ImGui.GetWindowDrawList().AddImageQuad(icon.GetWrapOrEmpty().ImGuiHandle,
-				p1, p2, p3, p4, new(0, 0), new(1, 0), new(1, 1), new(0, 1), colour));
+		drawEndPos = new(
+			drawPos.X + iconHalfSize.X * MathF.Sin(rotation),
+			drawPos.Y + iconHalfSize.Y * MathF.Cos(rotation)
+		);
+		return icon == null
+			? null
+			: new(
+				() =>
+					ImGui
+						.GetWindowDrawList()
+						.AddImageQuad(
+							icon.GetWrapOrEmpty().ImGuiHandle,
+							p1,
+							p2,
+							p3,
+							p4,
+							new(0, 0),
+							new(1, 0),
+							new(1, 1),
+							new(0, 1),
+							colour
+						)
+			);
 	}
 
 	protected static DrawAction? GenerateScreenMarkerIconDrawAction(
-		ISharedImmediateTexture? icon, Vector2 screenPosRaw, Vector2 iconSizeRaw,
-		float scale, float alpha, out Vector2 drawEndPos)
+		ISharedImmediateTexture? icon,
+		Vector2 screenPosRaw,
+		Vector2 iconSizeRaw,
+		float scale,
+		float alpha,
+		out Vector2 drawEndPos
+	)
 	{
 		var iconSize = iconSizeRaw * scale;
 		drawEndPos = screenPosRaw - iconSize / 2;
 		var iconDrawPos = drawEndPos;
-		return icon == null ? null
-			: new(() => ImGui.GetWindowDrawList().AddImage(icon.GetWrapOrEmpty().ImGuiHandle,
-				iconDrawPos, iconDrawPos + iconSize, new(0, 0), new(1, 1),
-				ImGui.ColorConvertFloat4ToU32(new(1, 1, 1, alpha))));
+		return icon == null
+			? null
+			: new(
+				() =>
+					ImGui
+						.GetWindowDrawList()
+						.AddImage(
+							icon.GetWrapOrEmpty().ImGuiHandle,
+							iconDrawPos,
+							iconDrawPos + iconSize,
+							new(0, 0),
+							new(1, 1),
+							ImGui.ColorConvertFloat4ToU32(new(1, 1, 1, alpha))
+						)
+			);
 	}
 
-	protected static DrawAction? GenerateAltitudeDiffIconDrawAction(float altDiff,
-		Vector2 screenPosRaw, float scale, float alpha, out Vector2 drawEndPos)
+	protected static DrawAction? GenerateAltitudeDiffIconDrawAction(
+		float altDiff,
+		Vector2 screenPosRaw,
+		float scale,
+		float alpha,
+		out Vector2 drawEndPos
+	)
 	{
 		drawEndPos = screenPosRaw;
 		ISharedImmediateTexture? icon = null;
-		if (altDiff > 5) icon = Plugin.IconManager.AltitudeHigherIcon;
-		if (altDiff < -5) icon = Plugin.IconManager.AltitudeLowerIcon;
-		if (icon == null) return null;
+		if (altDiff > 5)
+			icon = Plugin.IconManager.AltitudeHigherIcon;
+		if (altDiff < -5)
+			icon = Plugin.IconManager.AltitudeLowerIcon;
+		if (icon == null)
+			return null;
 		var iconHalfSize = IconManager.AltitudeIconSize * scale / 2;
-		return new(() => ImGui.GetWindowDrawList().AddImage(icon.GetWrapOrEmpty().ImGuiHandle,
-			screenPosRaw - iconHalfSize, screenPosRaw + iconHalfSize, new(0, 0), new(1, 1),
-			ImGui.ColorConvertFloat4ToU32(new(1, 1, 1, alpha))));
+		return new(
+			() =>
+				ImGui
+					.GetWindowDrawList()
+					.AddImage(
+						icon.GetWrapOrEmpty().ImGuiHandle,
+						screenPosRaw - iconHalfSize,
+						screenPosRaw + iconHalfSize,
+						new(0, 0),
+						new(1, 1),
+						ImGui.ColorConvertFloat4ToU32(new(1, 1, 1, alpha))
+					)
+		);
 	}
 
-	protected static DrawAction? GenerateExtraInfoDrawAction(string info,
-		float markerSizeScale, float textRelSizeScale,
-		Vector4 colour, float shadowLightness, Vector2 markerScreenPos,
-		Vector2 markerSizeRaw, float rotation, out Vector2 drawEndPos)
+	protected static DrawAction? GenerateExtraInfoDrawAction(
+		string info,
+		float markerSizeScale,
+		float textRelSizeScale,
+		Vector4 colour,
+		float shadowLightness,
+		Vector2 markerScreenPos,
+		Vector2 markerSizeRaw,
+		float rotation,
+		out Vector2 drawEndPos
+	)
 	{
 		drawEndPos = markerScreenPos;
-		if (string.IsNullOrEmpty(info)) return null;
+		if (string.IsNullOrEmpty(info))
+			return null;
 		var textSizeScale = markerSizeScale * textRelSizeScale;
 		var fontsize = ImGui.GetFontSize() * textSizeScale;
 		var textsize = UiHelper.GetTextSize(info, ImGui.GetFont(), fontsize);
-		drawEndPos.Y += (markerSizeRaw.Y * markerSizeScale - textsize.Y) / 2 + markerSizeScale / textRelSizeScale;  // make it slighly lower
-		bool rightAligned = false;
+		drawEndPos.Y +=
+			(markerSizeRaw.Y * markerSizeScale - textsize.Y) / 2
+			+ markerSizeScale / textRelSizeScale; // make it slighly lower
+		var rightAligned = false;
 		if (rotation > -.2f)
 		{
 			// direction indicator would be on left side, so just draw text on right
@@ -490,8 +698,20 @@ public abstract class Compass
 			rightAligned = true;
 		}
 		var textDrawPos = drawEndPos;
-		return new(() => UiHelper.DrawMultilineTextWithShadow(ImGui.GetWindowDrawList(), info,
-			textDrawPos, ImGui.GetFont(), ImGui.GetFontSize(), textSizeScale, colour, shadowLightness, rightAligned));
+		return new(
+			() =>
+				UiHelper.DrawMultilineTextWithShadow(
+					ImGui.GetWindowDrawList(),
+					info,
+					textDrawPos,
+					ImGui.GetFont(),
+					ImGui.GetFontSize(),
+					textSizeScale,
+					colour,
+					shadowLightness,
+					rightAligned
+				)
+		);
 	}
 
 	protected static Vector2 PushToSideOnXIfNeeded(Vector2 drawPos, bool posInFrontOfCamera)
@@ -501,8 +721,10 @@ public abstract class Compass
 			var viewport = ImGui.GetMainViewport();
 			// Fix X-axis for some objs: push all those not in front of camera to side
 			//  so that they don't dangle in the middle of the screen
-			drawPos.X = drawPos.X - UiHelper.GetScreenCentre().X > 0
-				? (viewport.Pos.X + viewport.Size.X) : viewport.Pos.X;
+			drawPos.X =
+				drawPos.X - UiHelper.GetScreenCentre().X > 0
+					? (viewport.Pos.X + viewport.Size.X)
+					: viewport.Pos.X;
 		}
 		return drawPos;
 	}
@@ -516,8 +738,8 @@ public abstract class Compass
 	#endregion Drawing Helpers
 
 	// y-axis is reversed (up is + instead of -) in NDC for nameplates
-	private static Vector3 TranslateNormalisedNameplatePos3D(Vector3 pos3norm)
-		=> UiHelper.TranslateNormalisedCoordinates(pos3norm, true);
+	private static Vector3 TranslateNormalisedNameplatePos3D(Vector3 pos3norm) =>
+		UiHelper.TranslateNormalisedCoordinates(pos3norm, true);
 
 	private static Vector2 TranslateNormalisedNameplatePos2D(Vector3 pos3norm)
 	{
@@ -525,13 +747,15 @@ public abstract class Compass
 		return new(pos.X, pos.Y);
 	}
 
-	private static bool IsNameplatePosInsideConstraint(CachedCompassObjective objective)
-		=> UiHelper.IsScreenPosInsideConstraint(
+	private static bool IsNameplatePosInsideConstraint(CachedCompassObjective objective) =>
+		UiHelper.IsScreenPosInsideConstraint(
 			TranslateNormalisedNameplatePos2D(objective.NormalisedNameplatePos),
-			Plugin.Config.ScreenMarkConstraint, new(0, 0));
+			Plugin.Config.ScreenMarkConstraint,
+			new(0, 0)
+		);
 
-	private static bool ShouldHideMarkerFor(CachedCompassObjective objective)
-		=> IsNameplatePosInsideConstraint(objective)
+	private static bool ShouldHideMarkerFor(CachedCompassObjective objective) =>
+		IsNameplatePosInsideConstraint(objective)
 		&& objective.Distance3D < Plugin.Config.HideScreenMarkEnabledDistance;
 
 	private void DisposeCompassUsedIcons()

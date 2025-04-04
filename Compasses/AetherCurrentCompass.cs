@@ -20,51 +20,66 @@ public class AetherCurrentCompass : Compass
 
 	private const uint aetherCurrentMarkerIconId = 60033;
 
-	public override bool IsEnabledInCurrentTerritory()
-		=> ZoneWatcher.CurrentTerritoryType?.TerritoryIntendedUse.ValueNullable?.RowId == 1; // mostly normal wild field
+	public override bool IsEnabledInCurrentTerritory() =>
+		ZoneWatcher.CurrentTerritoryType?.TerritoryIntendedUse.ValueNullable?.RowId == 1; // mostly normal wild field
 
-	protected override unsafe string GetClosestObjectiveDescription(CachedCompassObjective _)
-		=> "Aether Current";
+	protected override string GetClosestObjectiveDescription(CachedCompassObjective _) =>
+		"Aether Current";
 
-	public override unsafe DrawAction? CreateDrawDetailsAction(CachedCompassObjective objective)
+	public override DrawAction? CreateDrawDetailsAction(CachedCompassObjective objective)
 	{
-		if (objective.IsEmpty()) return null;
+		if (objective.IsEmpty())
+			return null;
 		return new(() =>
 		{
 			ImGui.Text($"{objective.Name}");
-			ImGui.BulletText($"{CompassUtil.MapCoordToFormattedString(objective.CurrentMapCoord)} (approx.)");
-			ImGui.BulletText($"{objective.CompassDirectionFromPlayer},  " +
-				$"{CompassUtil.DistanceToDescriptiveString(objective.Distance3D, false)}");
+			ImGui.BulletText(
+				$"{CompassUtil.MapCoordToFormattedString(objective.CurrentMapCoord)} (approx.)"
+			);
+			ImGui.BulletText(
+				$"{objective.CompassDirectionFromPlayer},  "
+					+ $"{CompassUtil.DistanceToDescriptiveString(objective.Distance3D, false)}"
+			);
 			ImGui.BulletText(CompassUtil.AltitudeDiffToDescriptiveString(objective.AltitudeDiff));
 			DrawFlagButton($"{(long)objective.GameObject}", objective.CurrentMapCoord);
 			ImGui.Separator();
 		});
 	}
 
-	public override unsafe DrawAction? CreateMarkScreenAction(CachedCompassObjective objective)
+	public override DrawAction? CreateMarkScreenAction(CachedCompassObjective objective)
 	{
-		if (objective.IsEmpty()) return null;
-		return GenerateDefaultScreenMarkerDrawAction(objective,
-			aetherCurrentMarkerIconId, DefaultMarkerIconSize, .9f,
+		if (objective.IsEmpty())
+			return null;
+		return GenerateDefaultScreenMarkerDrawAction(
+			objective,
+			aetherCurrentMarkerIconId,
+			DefaultMarkerIconSize,
+			.9f,
 			$"{objective.Name}, {CompassUtil.DistanceToDescriptiveString(objective.Distance3D, true)}",
-			infoTextColour, infoTextShadowLightness, out _, important: objective.Distance3D < 60);
+			infoTextColour,
+			infoTextShadowLightness,
+			out _,
+			important: objective.Distance3D < 60
+		);
 	}
 
 	public override unsafe bool IsObjective(GameObject* o)
 	{
-		if (o == null) return false;
-		if (o->ObjectKind != ObjectKind.EventObj) return false;
+		if (o == null)
+			return false;
+		if (o->ObjectKind != ObjectKind.EventObj)
+			return false;
 		return IsNameOfAetherCurrent(CompassUtil.GetName(o));
 	}
 
 	private static bool IsNameOfAetherCurrent(string? name)
 	{
-		if (name == null) return false;
+		if (name == null)
+			return false;
 		name = name.ToLower();
 		return name == "aether current"
 			|| name == "風脈の泉"
 			|| name == "windätherquelle"
-			|| name == "vent éthéré"
-			;
+			|| name == "vent éthéré";
 	}
 }

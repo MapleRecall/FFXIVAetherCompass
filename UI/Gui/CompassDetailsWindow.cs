@@ -9,15 +9,14 @@ public class CompassDetailsWindow
 {
 	private readonly Dictionary<Compass, ActionQueue> drawActions = [];
 
-	public bool RegisterCompass(Compass c)
-		=> drawActions.TryAdd(c, new(80));
+	public bool RegisterCompass(Compass c) => drawActions.TryAdd(c, new(80));
 
-	public bool UnregisterCompass(Compass c)
-		=> drawActions.Remove(c);
+	public bool UnregisterCompass(Compass c) => drawActions.Remove(c);
 
 	public bool AddDrawAction(Compass c, Action? a, bool important)
 	{
-		if (a == null) return false;
+		if (a == null)
+			return false;
 		if (!drawActions.TryGetValue(c, out var queue))
 			return false;
 		return queue.QueueAction(a, important);
@@ -25,7 +24,8 @@ public class CompassDetailsWindow
 
 	public bool AddDrawAction(Compass c, DrawAction? a)
 	{
-		if (a == null) return false;
+		if (a == null)
+			return false;
 		if (!drawActions.TryGetValue(c, out var queue))
 			return false;
 		return queue.QueueAction(a);
@@ -34,7 +34,8 @@ public class CompassDetailsWindow
 	public void Draw()
 	{
 		var map = ZoneWatcher.CurrentMap;
-		if (map == null) return;
+		if (map == null)
+			return;
 
 		if (ImGui.Begin("AetherCompass: Detected Objects' Details"))
 		{
@@ -49,8 +50,7 @@ public class CompassDetailsWindow
 			if (!string.IsNullOrEmpty(mapName) && !string.IsNullOrEmpty(subName))
 				mapName += " > " + subName;
 
-			if (ImGui.BeginTable("##Tbl_DetailWindowMapInfo", 2,
-				ImGuiTableFlags.SizingStretchProp))
+			if (ImGui.BeginTable("##Tbl_DetailWindowMapInfo", 2, ImGuiTableFlags.SizingStretchProp))
 			{
 				ImGui.TableSetupColumn("##MapInfo", ImGuiTableColumnFlags.WidthStretch);
 				ImGui.TableSetupColumn("##ConfigButton", ImGuiTableColumnFlags.WidthFixed);
@@ -58,22 +58,25 @@ public class CompassDetailsWindow
 				ImGuiEx.IconTextMapMarker(true);
 				ImGui.TextWrapped($"{mapName}");
 				ImGui.TableNextColumn();
-				if (ImGuiEx.IconButton(
-					Dalamud.Interface.FontAwesomeIcon.Cog, 0, "Open Config"))
+				if (ImGuiEx.IconButton(Dalamud.Interface.FontAwesomeIcon.Cog, 0, "Open Config"))
 					Plugin.OpenConfig(true);
 				ImGui.EndTable();
 			}
 
 #if DEBUG
 			ImGui.BulletText($"TerritoryType={ZoneWatcher.CurrentTerritoryType?.RowId ?? 0}");
-			ImGui.BulletText($"Map data: RowId={map.Value.RowId}, SizeFactor={map.Value.SizeFactor}, " +
-				$"OffsetX={map.Value.OffsetX}, OffsetY={map.Value.OffsetY}, OffsetZ={CompassUtil.GetCurrentTerritoryZOffset()}");
-			ImGui.BulletText($"Main Viewport: pos={Dalamud.Interface.Utility.ImGuiHelpers.MainViewport.Pos}, " +
-				$"size={Dalamud.Interface.Utility.ImGuiHelpers.MainViewport.Size}, dpi={Dalamud.Interface.Utility.ImGuiHelpers.MainViewport.DpiScale}");
+			ImGui.BulletText(
+				$"Map data: RowId={map.Value.RowId}, SizeFactor={map.Value.SizeFactor}, "
+					+ $"OffsetX={map.Value.OffsetX}, OffsetY={map.Value.OffsetY}, OffsetZ={CompassUtil.GetCurrentTerritoryZOffset()}"
+			);
+			ImGui.BulletText(
+				$"Main Viewport: pos={Dalamud.Interface.Utility.ImGuiHelpers.MainViewport.Pos}, "
+					+ $"size={Dalamud.Interface.Utility.ImGuiHelpers.MainViewport.Size}, dpi={Dalamud.Interface.Utility.ImGuiHelpers.MainViewport.DpiScale}"
+			);
 #endif
 			if (ImGui.BeginTabBar("CompassesTabBar", ImGuiTabBarFlags.Reorderable))
 			{
-				foreach (Compass c in drawActions.Keys)
+				foreach (var c in drawActions.Keys)
 				{
 					if (c.CompassEnabled && c.ShowDetail)
 					{

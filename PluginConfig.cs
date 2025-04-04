@@ -1,10 +1,10 @@
+using System.IO;
+using System.Numerics;
+using System.Text.RegularExpressions;
 using AetherCompass.Common;
 using AetherCompass.Compasses.Configs;
 using Dalamud.Configuration;
 using Newtonsoft.Json;
-using System.IO;
-using System.Numerics;
-using System.Text.RegularExpressions;
 
 namespace AetherCompass;
 
@@ -60,7 +60,6 @@ public class PluginConfig : IPluginConfiguration
 
 	[JsonIgnore]
 	public bool DebugTestAllGameObjects = false;
-
 #endif
 
 	[JsonIgnore]
@@ -68,24 +67,44 @@ public class PluginConfig : IPluginConfiguration
 
 	public void CheckValueValidity(Vector2 screenSize)
 	{
-		ScreenMarkSizeScale = MathUtil.Clamp(ScreenMarkSizeScale,
-			ScreenMarkSizeBound.Min, ScreenMarkSizeBound.Max);
-		ScreenMarkTextRelSizeScale = MathUtil.Clamp(ScreenMarkTextRelSizeScale,
-			ScreenMarkTextRelSizeBound.Min, ScreenMarkTextRelSizeBound.Max);
+		ScreenMarkSizeScale = MathUtil.Clamp(
+			ScreenMarkSizeScale,
+			ScreenMarkSizeBound.Min,
+			ScreenMarkSizeBound.Max
+		);
+		ScreenMarkTextRelSizeScale = MathUtil.Clamp(
+			ScreenMarkTextRelSizeScale,
+			ScreenMarkTextRelSizeBound.Min,
+			ScreenMarkTextRelSizeBound.Max
+		);
 
-		ScreenMarkConstraint.X = MathUtil.Clamp(ScreenMarkConstraint.X,
-			ScreenMarkConstraintMin, screenSize.X / 2 - 10);
-		ScreenMarkConstraint.Y = MathUtil.Clamp(ScreenMarkConstraint.Y,
-			ScreenMarkConstraintMin, screenSize.Y / 2 - 10);
-		ScreenMarkConstraint.Z = MathUtil.Clamp(ScreenMarkConstraint.Z,
-			ScreenMarkConstraintMin, screenSize.X / 2 - 10);
-		ScreenMarkConstraint.W = MathUtil.Clamp(ScreenMarkConstraint.W,
-			ScreenMarkConstraintMin, screenSize.Y / 2 - 10);
+		ScreenMarkConstraint.X = MathUtil.Clamp(
+			ScreenMarkConstraint.X,
+			ScreenMarkConstraintMin,
+			screenSize.X / 2 - 10
+		);
+		ScreenMarkConstraint.Y = MathUtil.Clamp(
+			ScreenMarkConstraint.Y,
+			ScreenMarkConstraintMin,
+			screenSize.Y / 2 - 10
+		);
+		ScreenMarkConstraint.Z = MathUtil.Clamp(
+			ScreenMarkConstraint.Z,
+			ScreenMarkConstraintMin,
+			screenSize.X / 2 - 10
+		);
+		ScreenMarkConstraint.W = MathUtil.Clamp(
+			ScreenMarkConstraint.W,
+			ScreenMarkConstraintMin,
+			screenSize.Y / 2 - 10
+		);
 
-		HideScreenMarkEnabledDistance
-			= (int)MathUtil.Clamp(HideScreenMarkEnabledDistance,
+		HideScreenMarkEnabledDistance = (int)
+			MathUtil.Clamp(
+				HideScreenMarkEnabledDistance,
 				HideScreenMarkEnabledDistanceBound.Min,
-				HideScreenMarkEnabledDistanceBound.Max);
+				HideScreenMarkEnabledDistanceBound.Max
+			);
 
 		AetherCurrentConfig.CheckValueValidity();
 		MobHuntConfig.CheckValueValidity();
@@ -114,7 +133,8 @@ public class PluginConfig : IPluginConfiguration
 		NotifySe = config.NotifySe;
 		NotifyToast = config.NotifyToast;
 		HideScreenMarkEnabledDistance = config.HideScreenMarkEnabledDistance;
-		HideScreenMarkIfNameplateInsideDisplayArea = config.HideScreenMarkIfNameplateInsideDisplayArea;
+		HideScreenMarkIfNameplateInsideDisplayArea =
+			config.HideScreenMarkIfNameplateInsideDisplayArea;
 
 		AetherCurrentConfig.Load(config.AetherCurrentConfig);
 		MobHuntConfig.Load(config.MobHuntConfig);
@@ -129,8 +149,7 @@ public class PluginConfig : IPluginConfiguration
 		Plugin.PluginInterface.SavePluginConfig(this);
 	}
 
-	public void Load()
-		=> Load(PluginConfigHelper.GetSavedPluginConfig());
+	public void Load() => Load(PluginConfigHelper.GetSavedPluginConfig());
 
 	public void Load(PluginConfig config)
 	{
@@ -138,11 +157,11 @@ public class PluginConfig : IPluginConfiguration
 		if (!versionMatched)
 			PluginConfigHelper.BackupSavedPluginConfig();
 		LoadValues(checkedConfig);
-		if (!versionMatched) Save();
+		if (!versionMatched)
+			Save();
 	}
 
-	private static bool PreloadCheck(PluginConfig config,
-		out PluginConfig checkedConfig)
+	private static bool PreloadCheck(PluginConfig config, out PluginConfig checkedConfig)
 	{
 		if (ActiveVersion == config.Version)
 		{
@@ -154,17 +173,21 @@ public class PluginConfig : IPluginConfiguration
 		{
 			var restored = PluginConfigHelper.RestoreBackupConfig(
 				PluginConfigHelper.FindMatchingConfigBackup(
-					ActiveVersion, GetPluginVersionAsString()));
+					ActiveVersion,
+					GetPluginVersionAsString()
+				)
+			);
 			if (restored == null)
 			{
-				LogWarning("Config version not matched and no backup found. "
-					+ " Load saved config anyway.");
+				LogWarning(
+					"Config version not matched and no backup found. "
+						+ " Load saved config anyway."
+				);
 				checkedConfig = config;
 			}
 			else
 			{
-				LogWarning("Config version not matched. "
-					+ "Trying to restore from backup.");
+				LogWarning("Config version not matched. " + "Trying to restore from backup.");
 				checkedConfig = restored;
 			}
 			return false;
@@ -179,36 +202,32 @@ public class PluginConfig : IPluginConfiguration
 		private const string confBkpPatternConfigVerKey = "cver";
 		private const string confBkpPatternPluginVerKey = "pver";
 
-		private const string ConfBkpFilenamePattern
-			= @ConfBkpFilenamePart1
+		private const string ConfBkpFilenamePattern =
+			@ConfBkpFilenamePart1
 			+ @$"c(?<{confBkpPatternConfigVerKey}>[0-9]+)_"
 			+ @$"v(?<{confBkpPatternPluginVerKey}>[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)"
-			+ @"\" + @ConfBkpFileExt;
+			+ @"\"
+			+ @ConfBkpFileExt;
 
-		private const string ConfBkpFileFullpathPattern
-			= @".+[/\\]" + ConfBkpFilenamePattern;
+		private const string ConfBkpFileFullpathPattern = @".+[/\\]" + ConfBkpFilenamePattern;
 
-		private static readonly Regex BackupConfigFullpathMatcher
-			= new(ConfBkpFileFullpathPattern);
+		private static readonly Regex BackupConfigFullpathMatcher = new(ConfBkpFileFullpathPattern);
 
-		private static string BackupConfigDirectoryPath
-			=> Path.Combine(
-				Plugin.PluginInterface.GetPluginConfigDirectory(),
-				ConfBkpFolderName);
+		private static string BackupConfigDirectoryPath =>
+			Path.Combine(Plugin.PluginInterface.GetPluginConfigDirectory(), ConfBkpFolderName);
 
-		private static string GenerateConfBkpFileName(PluginConfig config)
-			=> ConfBkpFilenamePart1
+		private static string GenerateConfBkpFileName(PluginConfig config) =>
+			ConfBkpFilenamePart1
 			+ $"c{config.Version}_v{GetPluginVersionAsString()}"
 			+ ConfBkpFileExt;
 
-		internal static PluginConfig GetSavedPluginConfig()
-			=> GetSavedPluginConfigIfAny() ?? new();
+		internal static PluginConfig GetSavedPluginConfig() => GetSavedPluginConfigIfAny() ?? new();
 
-		internal static PluginConfig? GetSavedPluginConfigIfAny()
-			=> Plugin.PluginInterface.GetPluginConfig() as PluginConfig;
+		internal static PluginConfig? GetSavedPluginConfigIfAny() =>
+			Plugin.PluginInterface.GetPluginConfig() as PluginConfig;
 
-		internal static string GetSavedPluginConfigPath()
-			=> Plugin.PluginInterface.ConfigFile.FullName;
+		internal static string GetSavedPluginConfigPath() =>
+			Plugin.PluginInterface.ConfigFile.FullName;
 
 		internal static void BackupSavedPluginConfig()
 		{
@@ -221,11 +240,11 @@ public class PluginConfig : IPluginConfiguration
 					return;
 				}
 
-				var dirpath = BackupConfigDirectoryPath;
-				var dir = Directory.CreateDirectory(dirpath);
+				var dirPath = BackupConfigDirectoryPath;
+				var dir = Directory.CreateDirectory(dirPath).FullName;
 
 				var bkpFilename = GenerateConfBkpFileName(config);
-				var bkpFilePath = Path.Combine(dirpath, bkpFilename);
+				var bkpFilePath = Path.Combine(dirPath, bkpFilename);
 				File.Copy(GetSavedPluginConfigPath(), bkpFilePath, true);
 				LogInfo($"Created config back up at: {bkpFilePath}");
 			}
@@ -235,23 +254,22 @@ public class PluginConfig : IPluginConfiguration
 			}
 		}
 
-		internal static PluginConfig? RestoreBackupConfig(string? fullpath)
+		internal static PluginConfig? RestoreBackupConfig(string? fullPath)
 		{
-			if (string.IsNullOrEmpty(fullpath)) return null;
+			if (string.IsNullOrEmpty(fullPath))
+				return null;
 
-			if (!File.Exists(fullpath))
+			if (!File.Exists(fullPath))
 			{
-				LogError($"Failed to restore backup config. "
-					+ $"File does not exist: {fullpath ?? "<null>"}");
+				LogError($"Failed to restore backup config. " + $"File does not exist: {fullPath}");
 				return null;
 			}
 
 			try
 			{
-				var contents = File.ReadAllText(fullpath);
-				var restoredConfig
-					= JsonConvert.DeserializeObject<PluginConfig>(contents);
-				LogInfo($"Config restored from {fullpath}");
+				var contents = File.ReadAllText(fullPath);
+				var restoredConfig = JsonConvert.DeserializeObject<PluginConfig>(contents);
+				LogInfo($"Config restored from {fullPath}");
 				return restoredConfig;
 			}
 			catch (Exception e)
@@ -262,38 +280,43 @@ public class PluginConfig : IPluginConfiguration
 		}
 
 		internal static string? FindMatchingConfigBackup(
-			int desiredConfigVersion, string desiredPluginVersion)
+			int desiredConfigVersion,
+			string desiredPluginVersion
+		)
 		{
-			var dirpath = BackupConfigDirectoryPath;
-			if (!Directory.Exists(dirpath)) return null;
+			var dirPath = BackupConfigDirectoryPath;
+			if (!Directory.Exists(dirPath))
+				return null;
 			(string Path, int CVer, string PVer) match = ("", -1, "0.0.0.0");
 			try
 			{
-				var filepaths = Directory.GetFiles(dirpath);
-				foreach (var filepath in filepaths)
+				var filePaths = Directory.GetFiles(dirPath);
+				foreach (var filepath in filePaths)
 				{
 					if (!BackupConfigFullpathMatcher.IsMatch(filepath))
 						continue;
 					var groups = BackupConfigFullpathMatcher.Match(filepath).Groups;
-					var bkpConfigVer
-						= groups.TryGetValue(confBkpPatternConfigVerKey, out var g1)
-						? int.Parse(g1.Value) : -1;
-					var bkpPluginVer
-						= groups.TryGetValue(confBkpPatternPluginVerKey, out var g2)
-						? g2.Value : "0.0.0.0";
-					if (desiredConfigVersion != bkpConfigVer) continue;
+					var bkpConfigVer = groups.TryGetValue(confBkpPatternConfigVerKey, out var g1)
+						? int.Parse(g1.Value)
+						: -1;
+					var bkpPluginVer = groups.TryGetValue(confBkpPatternPluginVerKey, out var g2)
+						? g2.Value
+						: "0.0.0.0";
+					if (desiredConfigVersion != bkpConfigVer)
+						continue;
 					if (desiredPluginVersion == bkpPluginVer)
 					{
 						match = (filepath, bkpConfigVer, bkpPluginVer);
 					}
-					else if (ComparePluginVersion(bkpPluginVer, match.PVer) > 0
-						&& ComparePluginVersion(bkpPluginVer, desiredPluginVersion) <= 0)
+					else if (
+						ComparePluginVersion(bkpPluginVer, match.PVer) > 0
+						&& ComparePluginVersion(bkpPluginVer, desiredPluginVersion) <= 0
+					)
 					{
 						match = (filepath, bkpConfigVer, bkpPluginVer);
 					}
-					if (match.CVer == desiredConfigVersion
-						&& match.PVer == desiredPluginVersion)
-						return match.Path;  // exact match
+					if (match.CVer == desiredConfigVersion && match.PVer == desiredPluginVersion)
+						return match.Path; // exact match
 				}
 			}
 			catch (Exception e)
