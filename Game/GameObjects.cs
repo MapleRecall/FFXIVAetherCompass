@@ -1,5 +1,6 @@
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using FFXIVClientStructs.FFXIV.Client.Game.Character;
 using FFXIVClientStructs.FFXIV.Client.Game.Object;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using static FFXIVClientStructs.FFXIV.Client.UI.UI3DModule;
@@ -18,8 +19,20 @@ internal static unsafe class GameObjects
 			? (ObjectInfo**)
 				Unsafe.AsPointer(
 					ref MemoryMarshal.GetReference(UI3DModule->SortedObjectInfoPointers)
-				) //(ObjectInfo**)UI3DModule->SortedObjectInfoPointerArray
+				)
 			: null;
+
+	public static GameObjectManager* GameObjManager => GameObjectManager.Instance();
+
+	public static GameObject** ObjectTable =>
+		GameObjManager != null
+			? (GameObject**)
+				Unsafe.AsPointer(
+					ref MemoryMarshal.GetReference(GameObjManager->Objects.IndexSorted)
+				)
+			: null;
+
+	public static Character* LocalPlayer => ObjectTable != null ? (Character*)ObjectTable[0] : null;
 
 	internal static int SortedObjectInfoCount =>
 		UI3DModule != null ? UI3DModule->SortedObjectInfoCount : 0;

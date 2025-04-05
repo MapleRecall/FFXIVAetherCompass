@@ -29,7 +29,7 @@ public class DebugCompass : Compass
 			Plugin.Config.DebugTestAllGameObjects
 			||
 #endif
-			o->EntityId == Plugin.ClientState.LocalPlayer?.EntityId
+			o->EntityId == GameObjects.LocalPlayer->EntityId
 			|| o->ObjectKind == ObjectKind.EventObj
 			//|| o->ObjectKind == ObjectKind.EventNpc
 			|| o->ObjectKind == ObjectKind.GatheringPoint

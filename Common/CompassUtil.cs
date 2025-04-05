@@ -34,21 +34,21 @@ public static class CompassUtil
 	public static unsafe float Get3DDistanceFromPlayer(GameObject* o) =>
 		o == null ? float.NaN : Get3DDistanceFromPlayer(o->Position);
 
-	public static float Get3DDistanceFromPlayer(Vector3 gameObjPos) =>
-		Plugin.ClientState.LocalPlayer == null
+	public static unsafe float Get3DDistanceFromPlayer(Vector3 gameObjPos) =>
+		GameObjects.LocalPlayer == null
 			? float.NaN
-			: Vector3.Distance(gameObjPos, Plugin.ClientState.LocalPlayer.Position);
+			: Vector3.Distance(gameObjPos, GameObjects.LocalPlayer->Position);
 
 	public static unsafe float Get2DDistanceFromPlayer(GameObject* o)
 	{
 		if (o == null)
 			return float.NaN;
-		var player = Plugin.ClientState.LocalPlayer;
+		var player = GameObjects.LocalPlayer;
 		if (player == null)
 			return float.NaN;
 		return MathF.Sqrt(
-			MathF.Pow(o->Position.X - player.Position.X, 2)
-				+ MathF.Pow(o->Position.Z - player.Position.Z, 2)
+			MathF.Pow(o->Position.X - player->Position.X, 2)
+				+ MathF.Pow(o->Position.Z - player->Position.Z, 2)
 		);
 	}
 
@@ -64,10 +64,10 @@ public static class CompassUtil
 	public static unsafe float GetAltitudeDiffFromPlayer(GameObject* o) =>
 		o == null ? float.NaN : GetAltitudeDiffFromPlayer(o->Position);
 
-	public static float GetAltitudeDiffFromPlayer(Vector3 gameObjPos) =>
-		Plugin.ClientState.LocalPlayer == null
+	public static unsafe float GetAltitudeDiffFromPlayer(Vector3 gameObjPos) =>
+		GameObjects.LocalPlayer == null
 			? float.NaN
-			: (gameObjPos.Y - Plugin.ClientState.LocalPlayer.Position.Y);
+			: (gameObjPos.Y - GameObjects.LocalPlayer->Position.Y);
 
 	public static string AltitudeDiffToDescriptiveString(float diff)
 	{
@@ -90,12 +90,12 @@ public static class CompassUtil
 	public static unsafe float GetRotationFromPlayer(GameObject* o) =>
 		o == null ? float.NaN : GetRotationFromPlayer(o->Position);
 
-	public static float GetRotationFromPlayer(Vector3 gameObjPos)
+	public static unsafe float GetRotationFromPlayer(Vector3 gameObjPos)
 	{
-		var player = Plugin.ClientState.LocalPlayer;
+		var player = GameObjects.LocalPlayer;
 		if (player == null)
 			return float.NaN;
-		return MathF.Atan2(gameObjPos.X - player.Position.X, gameObjPos.Z - player.Position.Z);
+		return MathF.Atan2(gameObjPos.X - player->Position.X, gameObjPos.Z - player->Position.Z);
 	}
 
 	private static readonly float directionSpan = MathF.Sin(3 * MathF.PI / 8);
@@ -103,13 +103,13 @@ public static class CompassUtil
 	public static unsafe CompassDirection GetDirectionFromPlayer(GameObject* o) =>
 		o == null ? CompassDirection.NaN : GetDirectionFromPlayer(o->Position);
 
-	public static CompassDirection GetDirectionFromPlayer(Vector3 gameObjPos)
+	public static unsafe CompassDirection GetDirectionFromPlayer(Vector3 gameObjPos)
 	{
-		var player = Plugin.ClientState.LocalPlayer;
+		var player = GameObjects.LocalPlayer;
 		if (player == null)
 			return CompassDirection.NaN;
 		var vec = Vector2.Normalize(
-			new(gameObjPos.X - player.Position.X, gameObjPos.Z - player.Position.Z)
+			new(gameObjPos.X - player->Position.X, gameObjPos.Z - player->Position.Z)
 		);
 		CompassDirection d = 0;
 		if (MathF.Abs(vec.X) < directionSpan)
