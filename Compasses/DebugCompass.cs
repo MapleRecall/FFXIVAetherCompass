@@ -5,7 +5,7 @@ using AetherCompass.Game;
 using AetherCompass.UI.Gui;
 using FFXIVClientStructs.FFXIV.Client.Game.Object;
 using FFXIVClientStructs.FFXIV.Client.UI;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 
 namespace AetherCompass.Compasses;
 
@@ -36,7 +36,7 @@ public class DebugCompass : Compass
 			|| o->ObjectKind == ObjectKind.Aetheryte
 			|| o->ObjectKind == ObjectKind.AreaObject
 			|| o->ObjectKind == ObjectKind.CardStand
-			|| o->ObjectKind == ObjectKind.MjiObject
+			|| o->ObjectKind == ObjectKind.ReactionEventObject
 			|| o->ObjectKind == ObjectKind.BattleNpc
 		);
 

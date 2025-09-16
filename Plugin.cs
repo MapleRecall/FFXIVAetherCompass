@@ -216,10 +216,10 @@ public class Plugin : IDalamudPlugin
 		|| Config.HideWhenCraftGather
 			&& (
 				ClientCondition[ConditionFlag.Crafting]
-				|| ClientCondition[ConditionFlag.Crafting40]
+				|| ClientCondition[ConditionFlag.ExecutingCraftingAction]
 				|| ClientCondition[ConditionFlag.Fishing]
 				|| ClientCondition[ConditionFlag.Gathering]
-				|| ClientCondition[ConditionFlag.Gathering42]
+				|| ClientCondition[ConditionFlag.ExecutingGatheringAction]
 				|| ClientCondition[ConditionFlag.PreparingToCraft]
 			);
 
